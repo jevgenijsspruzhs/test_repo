@@ -1,0 +1,5 @@
+[
+  {"code": "WELCOME10", "kind": "percent", "value": "10", "valid_until": "2030-12-31", "min_subtotal": "20.00"},
+  {"code": "FIVEOFF", "kind": "fixed", "value": "5.00", "min_subtotal": "30.00"},
+  {"code": "SPRING15", "kind": "percent", "value": "15", "valid_until": "2026-05-31"}
+]

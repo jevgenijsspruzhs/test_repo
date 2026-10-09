@@ -1,0 +1,8 @@
+{
+  "lines": [
+    {"sku": "TEA-GREEN", "name": "Green tea, 100 g", "unit_price": "4.90", "quantity": 3, "vat": "reduced"},
+    {"sku": "MUG-STONE", "name": "Stoneware mug", "unit_price": "18.00", "quantity": 2, "vat": "standard"},
+    {"sku": "BOOK-BREW", "name": "The Art of Brewing", "unit_price": "29.00", "quantity": 1, "vat": "reduced"}
+  ],
+  "coupon": "WELCOME10"
+}
