@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+- Polis smoke change for TSTPRJ-3
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
