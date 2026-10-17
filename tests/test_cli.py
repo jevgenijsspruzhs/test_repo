@@ -8,11 +8,23 @@ from pathlib import Path
 import pytest
 
 from shopkit import __version__
-from shopkit.cli import main
+from shopkit.cli import _format_row, main
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 CART = str(EXAMPLES / "cart.json")
 COUPONS = str(EXAMPLES / "coupons.json")
+
+GOLDEN_TEXT = """\
+  3 x Green tea, 100 g         CHF 14.70
+  2 x Stoneware mug            CHF 36.00
+  1 x The Art of Brewing       CHF 29.00
+Subtotal                       CHF 79.70
+Coupon WELCOME10               -CHF 7.97
+VAT 8.1% (standard)             CHF 2.62
+VAT 2.6% (reduced)              CHF 1.02
+Total                          CHF 75.37
+Total (cash)                   CHF 75.35
+"""
 
 
 def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
@@ -22,6 +34,31 @@ def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert "Coupon WELCOME10" in output
     assert "VAT 8.1% (standard)" in output
     assert output.splitlines()[-1].endswith("CHF 75.35")
+
+
+def test_text_quote_golden_output(capsys: pytest.CaptureFixture[str]) -> None:
+    # Captured from the text renderer before _format_row was introduced. Any change to the
+    # plain-text layout (columns, padding, labels) must be deliberate and update this text.
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01"]) == 0
+    assert capsys.readouterr().out == GOLDEN_TEXT
+
+
+def test_format_row_pads_label_and_right_aligns_amount() -> None:
+    # Label is left-aligned in the label column, then two spaces, then a 14-column amount.
+    assert _format_row("Tea", "CHF 1.00", 6) == "Tea" + " " * 11 + "CHF 1.00"
+    assert _format_row("Tea", "CHF 1'234.50", 6) == "Tea" + " " * 7 + "CHF 1'234.50"
+
+
+def test_format_row_keeps_long_labels_and_amounts_whole() -> None:
+    # A label wider than the column is not truncated; the amount column still follows it.
+    assert _format_row("Very long label", "CHF 1.00", 4) == "Very long label" + " " * 8 + "CHF 1.00"
+    # An amount wider than 14 columns is not truncated either.
+    assert _format_row("x", "CHF 1'234'567.89", 3) == "x" + " " * 4 + "CHF 1'234'567.89"
+
+
+def test_format_row_output_has_fixed_width_for_fitting_labels() -> None:
+    rows = [_format_row(label, "CHF 0.05", 12) for label in ("a", "Subtotal", "x" * 12)]
+    assert {len(row) for row in rows} == {12 + 2 + 14}
 
 
 def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
