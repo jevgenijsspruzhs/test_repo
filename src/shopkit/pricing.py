@@ -5,7 +5,8 @@ The calculation follows a Swiss invoice:
 1. the subtotal is the sum of the line nets (prices exclude VAT);
 2. a coupon discount is taken off the subtotal and spread across the lines in proportion to
    their nets, so each VAT category is taxed on its discounted amount;
-3. VAT is computed per rate on that rate's total taxable amount and rounded once per rate;
+3. VAT is computed once per rate on that rate's total taxable amount, rounded half up to the
+   cent; individual lines do not carry their own VAT, so the rounding happens once per rate;
 4. the total is the discounted subtotal plus VAT; the cash total is rounded to 5 Rappen.
 """
 
@@ -91,7 +92,9 @@ def _vat_lines(lines: Sequence[QuoteLine], rates: VatRates) -> tuple[VatLine, ..
             continue
         rate = rates.rate(category)
         taxable = sum((line.taxable for line in in_category), ZERO)
-        vat = sum((vat_amount(line.taxable, rate) for line in in_category), ZERO)
+        # One VAT computation on the group total, not one per line: per-line rounding
+        # would add up to a different amount for carts with many low-priced items.
+        vat = vat_amount(taxable, rate)
         result.append(VatLine(category, rate, taxable, vat))
     return tuple(result)
 

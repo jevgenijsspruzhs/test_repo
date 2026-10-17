@@ -10,6 +10,12 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Fixed
+
+- VAT is computed once per rate on that rate's total, rounded half up to the cent, instead of
+  being rounded per line item. Carts with many low-priced items can therefore show a different
+  VAT total than before (three items at CHF 0.10 at 8.1 % give CHF 0.02 VAT, not CHF 0.03).
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

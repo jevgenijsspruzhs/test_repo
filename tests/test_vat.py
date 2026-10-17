@@ -19,6 +19,16 @@ def test_vat_amount_rounds_to_the_cent() -> None:
     assert vat_amount(Decimal("32.40"), Decimal("8.1")) == Decimal("2.62")
 
 
+def test_vat_of_three_cheap_items_is_computed_on_their_total() -> None:
+    # Regression: three items at CHF 0.10 are 0.30 net. 8.1 % of 0.30 is 0.0243, so CHF 0.02.
+    assert vat_amount(Decimal("0.30"), Decimal("8.1")) == Decimal("0.02")
+
+
+def test_vat_amount_rounds_half_up() -> None:
+    assert vat_amount(Decimal("0.05"), Decimal("10")) == Decimal("0.01")
+    assert vat_amount(Decimal("0.25"), Decimal("10")) == Decimal("0.03")
+
+
 def test_custom_rates_must_cover_every_category() -> None:
     with pytest.raises(ValueError, match="missing"):
         VatRates({VatCategory.STANDARD: Decimal("7.7")})
