@@ -6,6 +6,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+- The plain-text quote of `shopkit quote` shows the number of items (`Items: N`) after the
+  Subtotal line. The `--json` output is unchanged.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3

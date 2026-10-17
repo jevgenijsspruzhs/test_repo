@@ -10,7 +10,7 @@ from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
 from shopkit.pricing import allocate, quote
 from shopkit.vat import SWISS_RATES, VatCategory, VatRates
-from tests.conftest import LAMP, MUG
+from tests.conftest import LAMP, MUG, TEA
 
 TODAY = date(2026, 10, 1)
 
@@ -27,6 +27,24 @@ def test_quote_without_coupon(cart: Cart) -> None:
     }
     assert result.total == Decimal("79.65")
     assert result.cash_total == Decimal("79.65")
+
+
+def test_item_count_of_an_empty_cart_is_zero() -> None:
+    assert quote(Cart(), today=TODAY).item_count == 0
+
+
+def test_item_count_sums_the_quantities_of_all_lines(cart: Cart) -> None:
+    assert quote(cart, today=TODAY).item_count == 6
+
+
+def test_item_count_with_several_lines_and_quantities() -> None:
+    cart = Cart()
+    cart.add(TEA, 3)
+    cart.add(LAMP, 1)
+    cart.add(MUG, 5)
+    result = quote(cart, today=TODAY)
+    assert [line.quantity for line in result.lines] == [3, 1, 5]
+    assert result.item_count == 9
 
 
 def test_quote_with_a_percentage_coupon(cart: Cart) -> None:

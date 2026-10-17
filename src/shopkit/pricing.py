@@ -54,6 +54,11 @@ class Quote:
     vat_lines: tuple[VatLine, ...]
 
     @property
+    def item_count(self) -> int:
+        """The sum of the quantities of all lines."""
+        return sum(line.quantity for line in self.lines)
+
+    @property
     def vat_total(self) -> Decimal:
         return sum((line.vat for line in self.vat_lines), ZERO)
 
