@@ -19,6 +19,11 @@ def test_vat_amount_rounds_to_the_cent() -> None:
     assert vat_amount(Decimal("32.40"), Decimal("8.1")) == Decimal("2.62")
 
 
+def test_vat_amount_rounds_exact_half_cents_up() -> None:
+    assert vat_amount(Decimal("0.05"), Decimal("10")) == Decimal("0.01")  # 0.005
+    assert vat_amount(Decimal("0.15"), Decimal("10")) == Decimal("0.02")  # 0.015
+
+
 def test_custom_rates_must_cover_every_category() -> None:
     with pytest.raises(ValueError, match="missing"):
         VatRates({VatCategory.STANDARD: Decimal("7.7")})

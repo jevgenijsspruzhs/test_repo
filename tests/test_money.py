@@ -46,6 +46,20 @@ def test_round_cents_rounds_half_up() -> None:
 @pytest.mark.parametrize(
     ("amount", "expected"),
     [
+        ("0.005", "0.01"),
+        ("0.015", "0.02"),
+        ("0.025", "0.03"),
+        ("0.004", "0.00"),
+        ("1.005", "1.01"),
+    ],
+)
+def test_round_cents_is_half_up_at_exact_half_cents(amount: str, expected: str) -> None:
+    assert round_cents(Decimal(amount)) == Decimal(expected)
+
+
+@pytest.mark.parametrize(
+    ("amount", "expected"),
+    [
         ("12.32", "12.30"),
         ("12.33", "12.35"),
         ("12.37", "12.35"),

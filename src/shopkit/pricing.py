@@ -5,7 +5,10 @@ The calculation follows a Swiss invoice:
 1. the subtotal is the sum of the line nets (prices exclude VAT);
 2. a coupon discount is taken off the subtotal and spread across the lines in proportion to
    their nets, so each VAT category is taxed on its discounted amount;
-3. VAT is computed per rate on that rate's total taxable amount and rounded once per rate;
+3. VAT is computed once per VAT rate, on the total taxable amount of the lines at that rate,
+   and rounded half up to the cent. Each VAT category has one rate, so the VAT lines are per
+   category. Individual lines are never rounded for VAT: three items at CHF 0.10 at 8.1 %
+   give VAT CHF 0.02 (0.0243), not CHF 0.03;
 4. the total is the discounted subtotal plus VAT; the cash total is rounded to 5 Rappen.
 """
 
@@ -84,6 +87,7 @@ def allocate(amount: Decimal, weights: Sequence[Decimal]) -> list[Decimal]:
 
 
 def _vat_lines(lines: Sequence[QuoteLine], rates: VatRates) -> tuple[VatLine, ...]:
+    """One VAT line per category in use: VAT on the category's total taxable amount, once."""
     result: list[VatLine] = []
     for category in VatCategory:
         in_category = [line for line in lines if line.vat_category is category]
@@ -91,8 +95,7 @@ def _vat_lines(lines: Sequence[QuoteLine], rates: VatRates) -> tuple[VatLine, ..
             continue
         rate = rates.rate(category)
         taxable = sum((line.taxable for line in in_category), ZERO)
-        vat = sum((vat_amount(line.taxable, rate) for line in in_category), ZERO)
-        result.append(VatLine(category, rate, taxable, vat))
+        result.append(VatLine(category, rate, taxable, vat_amount(taxable, rate)))
     return tuple(result)
 
 
