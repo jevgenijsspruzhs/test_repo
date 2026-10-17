@@ -10,7 +10,7 @@ from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
 from shopkit.pricing import allocate, quote
 from shopkit.vat import SWISS_RATES, VatCategory, VatRates
-from tests.conftest import LAMP, MUG
+from tests.conftest import GIFT_BOX, LAMP, MUG, TEA
 
 TODAY = date(2026, 10, 1)
 
@@ -52,6 +52,52 @@ def test_quote_with_a_fixed_coupon() -> None:
     cart.add(LAMP)
     result = quote(cart, today=TODAY, coupon=Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00")))
     assert result.total == Decimal("59.46")  # 55.00 + 8.1 % VAT (4.455 -> 4.46)
+
+
+@pytest.mark.parametrize(
+    "coupon",
+    [
+        Coupon("FIVEOFF", CouponKind.FIXED, Decimal("0.01")),
+        Coupon("GIFT29", CouponKind.FIXED, Decimal("29.99")),
+        Coupon("GIFT30", CouponKind.FIXED, Decimal("30.00")),
+        Coupon("GIFT31", CouponKind.FIXED, Decimal("30.01")),
+        Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00")),
+        Coupon("GIFT999", CouponKind.FIXED, Decimal("999.00")),
+        Coupon("HALFOFF", CouponKind.PERCENT, Decimal("50")),
+        Coupon("ALLOFF", CouponKind.PERCENT, Decimal("100")),
+    ],
+)
+def test_total_and_vat_are_never_negative(coupon: Coupon) -> None:
+    cart = Cart()
+    cart.add(GIFT_BOX, 1)
+    cart.add(MUG, 2)
+    cart.add(TEA, 3)
+    result = quote(cart, today=TODAY, coupon=coupon)
+    assert Decimal("0") <= result.discount <= result.subtotal
+    assert result.total >= 0
+    assert result.cash_total >= 0
+    assert all(line.taxable >= 0 for line in result.lines)
+    assert all(line.discount <= line.net for line in result.lines)
+    assert all(vat.taxable >= 0 and vat.vat >= 0 for vat in result.vat_lines)
+
+
+def test_a_fully_discounted_cart_has_zero_vat_lines() -> None:
+    cart = Cart()
+    cart.add(GIFT_BOX, 1)
+    cart.add(LAMP, 1)
+    result = quote(cart, today=TODAY, coupon=Coupon("ALLOFF", CouponKind.PERCENT, Decimal("100")))
+    assert result.total == Decimal("0.00")
+    assert [(v.taxable, v.vat) for v in result.vat_lines] == [
+        (Decimal("0.00"), Decimal("0.00")),
+    ]
+
+
+def test_a_percentage_coupon_is_unchanged_on_a_small_cart() -> None:
+    cart = Cart()
+    cart.add(GIFT_BOX, 1)
+    result = quote(cart, today=TODAY, coupon=Coupon("TENOFF", CouponKind.PERCENT, Decimal("10")))
+    assert result.discount == Decimal("3.00")
+    assert result.total == Decimal("29.19")  # 27.00 + 8.1 % VAT (2.187 -> 2.19)
 
 
 def test_an_invalid_coupon_stops_the_quote(cart: Cart) -> None:

@@ -12,6 +12,7 @@ TEA = Product("TEA-GREEN", "Green tea, 100 g", Decimal("4.90"), VatCategory.REDU
 MUG = Product("MUG-STONE", "Stoneware mug", Decimal("18.00"), VatCategory.STANDARD)
 BOOK = Product("BOOK-BREW", "The Art of Brewing", Decimal("25.00"), VatCategory.REDUCED)
 LAMP = Product("LAMP-DESK", "Desk lamp", Decimal("60.00"), VatCategory.STANDARD)
+GIFT_BOX = Product("BOX-GIFT", "Gift box", Decimal("30.00"), VatCategory.STANDARD)
 
 
 @pytest.fixture

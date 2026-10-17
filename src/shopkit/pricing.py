@@ -34,7 +34,8 @@ class QuoteLine:
 
     @property
     def taxable(self) -> Decimal:
-        return self.net - self.discount
+        """The net amount VAT is charged on: never negative, even if a discount is larger."""
+        return max(self.net - self.discount, ZERO)
 
 
 @dataclass(frozen=True, slots=True)

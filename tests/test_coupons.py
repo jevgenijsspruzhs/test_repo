@@ -5,8 +5,12 @@ from decimal import Decimal
 
 import pytest
 
+from shopkit.cart import Cart
 from shopkit.coupons import Coupon, CouponBook, CouponKind
 from shopkit.errors import CouponError, InvalidAmountError
+from shopkit.pricing import quote
+from shopkit.vat import VatCategory
+from tests.conftest import GIFT_BOX
 
 TODAY = date(2026, 10, 1)
 WELCOME = Coupon(
@@ -25,6 +29,28 @@ def test_percentage_discount() -> None:
 
 def test_fixed_discount() -> None:
     assert FIVE_OFF.discount_for(Decimal("79.70")) == Decimal("5.00")
+
+
+def test_fixed_discount_is_capped_at_the_subtotal() -> None:
+    gift = Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00"))
+    assert gift.discount_for(Decimal("30.00")) == Decimal("30.00")
+    assert gift.discount_for(Decimal("79.70")) == Decimal("50.00")
+    assert gift.discount_for(Decimal("50.00")) == Decimal("50.00")
+
+
+def test_gift_coupon_larger_than_the_cart_gives_a_zero_total() -> None:
+    cart = Cart()
+    cart.add(GIFT_BOX)  # CHF 30.00
+    gift = Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00"))
+    result = quote(cart, today=date(2026, 10, 1), coupon=gift)
+    assert result.subtotal == Decimal("30.00")
+    assert result.discount == Decimal("30.00")
+    assert result.total == Decimal("0.00")
+    assert result.cash_total == Decimal("0.00")
+    assert all(line.taxable == Decimal("0.00") for line in result.lines)
+    assert [(v.category, v.taxable, v.vat) for v in result.vat_lines] == [
+        (VatCategory.STANDARD, Decimal("0.00"), Decimal("0.00"))
+    ]
 
 
 def test_a_valid_coupon_passes_the_check() -> None:

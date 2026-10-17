@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- A fixed-amount coupon larger than the cart no longer gives a negative total or negative VAT
+  lines. The discount is capped at the subtotal, so a CHF 50 coupon on a CHF 30 cart gives a
+  discount of CHF 30 and a total of CHF 0.00. Percentage coupons are unchanged.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3
