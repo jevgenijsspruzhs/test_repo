@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+
+- The plain-text quote of `python -m shopkit quote` shows the number of items (`Items: N`) on the
+  line after the Subtotal.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3
