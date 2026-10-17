@@ -24,6 +24,40 @@ def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert output.splitlines()[-1].endswith("CHF 75.35")
 
 
+def test_text_quote_shows_the_item_count_after_the_subtotal(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The example cart has 3 x tea, 2 x mug and 1 x book: 6 items in total.
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    subtotal = next(i for i, line in enumerate(lines) if line.startswith("Subtotal"))
+    assert lines[subtotal + 1] == "Items: 6"
+    assert sum(line.startswith("Items: ") for line in lines) == 1
+
+
+def test_text_quote_item_count_sums_all_quantities(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cart_file = tmp_path / "cart.json"
+    cart_file.write_text(
+        json.dumps(
+            {
+                "lines": [
+                    {"sku": "ALPHA-01", "name": "Alpha", "unit_price": "1.00", "quantity": 7},
+                    {"sku": "BETA-01", "name": "Beta", "unit_price": "2.50", "quantity": 1},
+                    {"sku": "GAMMA-01", "name": "Gamma", "unit_price": "3.00", "quantity": 12},
+                    {"sku": "DELTA-01", "name": "Delta", "unit_price": "4.00", "quantity": 2},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert main(["quote", str(cart_file), "--today", "2026-10-01"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    subtotal = next(i for i, line in enumerate(lines) if line.startswith("Subtotal"))
+    assert lines[subtotal + 1] == "Items: 22"
+
+
 def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01", "--json"]) == 0
     result = json.loads(capsys.readouterr().out)
@@ -31,6 +65,22 @@ def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert result["discount"] == "7.97"
     assert result["total"] == "75.37"
     assert result["cash_total"] == "75.35"
+
+
+def test_json_quote_keys_are_unchanged(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01", "--json"]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert set(result) == {
+        "lines",
+        "subtotal",
+        "coupon",
+        "discount",
+        "vat",
+        "total",
+        "cash_total",
+    }
+    assert [line["quantity"] for line in result["lines"]] == [3, 2, 1]
+    assert result["subtotal"] == "79.70"
 
 
 def test_the_coupon_option_overrides_the_cart(capsys: pytest.CaptureFixture[str]) -> None:
