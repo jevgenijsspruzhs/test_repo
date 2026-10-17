@@ -33,6 +33,17 @@ def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert result["cash_total"] == "75.35"
 
 
+def test_a_lower_case_coupon_code_gives_the_same_total(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    args = ["quote", CART, "--coupons", COUPONS, "--coupon", "welcome10", "--today", "2026-10-01"]
+    assert main([*args, "--json"]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["coupon"] == "WELCOME10"
+    assert result["discount"] == "7.97"
+    assert result["cash_total"] == "75.35"
+
+
 def test_the_coupon_option_overrides_the_cart(capsys: pytest.CaptureFixture[str]) -> None:
     args = ["quote", CART, "--coupons", COUPONS, "--coupon", "FIVEOFF", "--today", "2026-10-01"]
     assert main([*args, "--json"]) == 0
