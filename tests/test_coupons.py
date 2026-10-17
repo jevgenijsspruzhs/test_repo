@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.coupons import Coupon, CouponBook, CouponKind
+from shopkit.coupons import Coupon, CouponBook, CouponKind, format_coupon_line
 from shopkit.errors import CouponError, InvalidAmountError
 
 TODAY = date(2026, 10, 1)
@@ -76,3 +76,21 @@ def test_unknown_code() -> None:
 def test_duplicate_codes_are_rejected() -> None:
     with pytest.raises(ValueError, match="duplicate coupon code"):
         CouponBook([FIVE_OFF, FIVE_OFF])
+
+
+def test_line_for_a_percentage_coupon_with_end_date_and_minimum() -> None:
+    assert format_coupon_line(WELCOME) == "WELCOME10  10%  2026-12-31  min CHF 20.00"
+
+
+def test_line_for_an_amount_coupon_without_end_date_or_minimum() -> None:
+    assert format_coupon_line(FIVE_OFF) == "FIVEOFF  CHF 5.00  no end date"
+
+
+def test_line_for_a_coupon_with_no_end_date_but_a_minimum() -> None:
+    coupon = Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("30.00"))
+    assert format_coupon_line(coupon) == "FIVEOFF  CHF 5.00  no end date  min CHF 30.00"
+
+
+def test_line_for_a_percentage_with_an_end_date_and_no_minimum() -> None:
+    coupon = Coupon("SPRING15", CouponKind.PERCENT, Decimal("15.5"), valid_until=date(2026, 5, 31))
+    assert format_coupon_line(coupon) == "SPRING15  15.5%  2026-05-31"

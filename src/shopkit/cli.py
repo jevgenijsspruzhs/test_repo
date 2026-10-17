@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 
 from shopkit import __version__
-from shopkit.coupons import Coupon, CouponBook
+from shopkit.coupons import Coupon, CouponBook, format_coupon_line
 from shopkit.errors import ShopkitError
 from shopkit.loader import load_cart, load_coupons
 from shopkit.money import format_chf
@@ -37,6 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
     quote_cmd.add_argument("--coupon", help="coupon code (overrides the cart file's coupon)")
     quote_cmd.add_argument("--today", type=_date, help="pricing date (default: today)")
     quote_cmd.add_argument("--json", action="store_true", help="machine-readable output")
+    coupons_cmd = commands.add_parser("coupons", help="list the coupons in a coupon file")
+    coupons_cmd.add_argument("file", type=Path, help="coupon JSON file")
     return parser
 
 
@@ -99,12 +101,18 @@ def _run_quote(args: argparse.Namespace) -> str:
     return render(result)
 
 
+def _run_coupons(args: argparse.Namespace) -> str:
+    """One line per coupon, in file order."""
+    return "\n".join(format_coupon_line(coupon) for coupon in load_coupons(args.file))
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        output = _run_quote(args)
+        output = _run_coupons(args) if args.command == "coupons" else _run_quote(args)
     except ShopkitError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_ERROR
-    print(output)
+    if output:  # an empty coupon file prints nothing
+        print(output)
     return EXIT_OK
