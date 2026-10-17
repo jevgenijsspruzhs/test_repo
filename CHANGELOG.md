@@ -10,6 +10,11 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Fixed
+
+- `python -m shopkit quote` no longer crashes with a traceback on an empty cart; it prints a
+  quote with subtotal, total and cash total of CHF 0.00 and exits 0.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
