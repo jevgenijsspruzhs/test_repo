@@ -40,25 +40,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _format_row(label: str, amount: str, width: int) -> str:
+    """One plain-text row: the label left-aligned in ``width`` columns, the amount right-aligned."""
+    return f"{label:<{width}}  {amount:>14}"
+
+
 def render(result: Quote) -> str:
     """A plain-text quote, one row per line item."""
     width = max(len(line.name) for line in result.lines)
+    # Product labels are "NNN x " (6 columns) followed by the name; every row shares this width.
+    label_width = width + 6
     rows = [
-        f"{line.quantity:>3} x {line.name:<{width}}  {format_chf(line.net):>14}"
+        _format_row(f"{line.quantity:>3} x {line.name:<{width}}", format_chf(line.net), label_width)
         for line in result.lines
     ]
-    label_width = width + 6
-
-    def total_row(label: str, amount_text: str) -> str:
-        return f"{label:<{label_width}}  {amount_text:>14}"
-
-    rows.append(total_row("Subtotal", format_chf(result.subtotal)))
+    rows.append(_format_row("Subtotal", format_chf(result.subtotal), label_width))
     if result.coupon_code is not None:
-        rows.append(total_row(f"Coupon {result.coupon_code}", "-" + format_chf(result.discount)))
+        rows.append(
+            _format_row(
+                f"Coupon {result.coupon_code}", "-" + format_chf(result.discount), label_width
+            )
+        )
     for vat in result.vat_lines:
-        rows.append(total_row(f"VAT {vat.rate}% ({vat.category})", format_chf(vat.vat)))
-    rows.append(total_row("Total", format_chf(result.total)))
-    rows.append(total_row("Total (cash)", format_chf(result.cash_total)))
+        rows.append(
+            _format_row(f"VAT {vat.rate}% ({vat.category})", format_chf(vat.vat), label_width)
+        )
+    rows.append(_format_row("Total", format_chf(result.total), label_width))
+    rows.append(_format_row("Total (cash)", format_chf(result.cash_total), label_width))
     return "\n".join(rows)
 
 
