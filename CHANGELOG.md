@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- Coupon codes are matched regardless of letter case, so `welcome10` works like `WELCOME10`.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3
