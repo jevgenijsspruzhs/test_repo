@@ -5,7 +5,11 @@ The calculation follows a Swiss invoice:
 1. the subtotal is the sum of the line nets (prices exclude VAT);
 2. a coupon discount is taken off the subtotal and spread across the lines in proportion to
    their nets, so each VAT category is taxed on its discounted amount;
-3. VAT is computed per rate on that rate's total taxable amount and rounded once per rate;
+3. VAT is computed once per rate, on the total taxable amount of the lines at that rate, and
+   rounded half up to the cent. It is not computed per line, so cheap items do not accumulate
+   rounding differences. Each VAT category gets its own :class:`VatLine`; with the Swiss rates
+   every category has a rate of its own, and categories that share a rate split that rate's VAT
+   in proportion to their taxable amounts;
 4. the total is the discounted subtotal plus VAT; the cash total is rounded to 5 Rappen.
 """
 
@@ -84,16 +88,30 @@ def allocate(amount: Decimal, weights: Sequence[Decimal]) -> list[Decimal]:
 
 
 def _vat_lines(lines: Sequence[QuoteLine], rates: VatRates) -> tuple[VatLine, ...]:
-    result: list[VatLine] = []
-    for category in VatCategory:
-        in_category = [line for line in lines if line.vat_category is category]
-        if not in_category:
-            continue
-        rate = rates.rate(category)
-        taxable = sum((line.taxable for line in in_category), ZERO)
-        vat = sum((vat_amount(line.taxable, rate) for line in in_category), ZERO)
-        result.append(VatLine(category, rate, taxable, vat))
-    return tuple(result)
+    """One line per VAT category in use. VAT is computed once per rate, on the rate's total.
+
+    Categories that share a rate (possible with custom :class:`VatRates`) have that rate's VAT
+    split between them in proportion to their taxable amounts, so the cents still add up.
+    """
+    categories = [c for c in VatCategory if any(line.vat_category is c for line in lines)]
+    taxable = {
+        category: sum(
+            (line.taxable for line in lines if line.vat_category is category),
+            ZERO,
+        )
+        for category in categories
+    }
+    by_rate: dict[Decimal, list[VatCategory]] = {}
+    for category in categories:
+        by_rate.setdefault(rates.rate(category), []).append(category)
+    vat: dict[VatCategory, Decimal] = {}
+    for rate, group in by_rate.items():
+        rate_vat = vat_amount(sum((taxable[c] for c in group), ZERO), rate)
+        vat.update(zip(group, allocate(rate_vat, [taxable[c] for c in group]), strict=True))
+    return tuple(
+        VatLine(category, rates.rate(category), taxable[category], vat[category])
+        for category in categories
+    )
 
 
 def quote(

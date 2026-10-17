@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- VAT is computed once per rate on the rate's total, rounded half up to the cent, instead of
+  per line. Carts with many cheap items no longer differ from the invoice by a few Rappen (three
+  items at CHF 0.10 at 8.1 % now show VAT CHF 0.02, not 0.03).
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3

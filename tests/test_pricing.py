@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 
 from shopkit.cart import Cart
+from shopkit.catalog import Product
 from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
 from shopkit.pricing import allocate, quote
@@ -66,6 +67,54 @@ def test_custom_vat_rates(cart: Cart) -> None:
     result = quote(cart, today=TODAY, rates=VatRates(rates))
     standard = next(v for v in result.vat_lines if v.category is VatCategory.STANDARD)
     assert standard.vat == Decimal("3.60")
+
+
+def test_cheap_items_are_taxed_once_per_rate() -> None:
+    cart = Cart()
+    for sku in ("PEN-BLUE", "PEN-RED", "PEN-BLACK"):  # 0.30 at 8.1 % -> 0.02, not 0.03
+        cart.add(Product(sku, "Ballpoint pen", Decimal("0.10"), VatCategory.STANDARD))
+    for sku in ("GUM-MINT", "GUM-LEMON", "GUM-BERRY"):  # 0.30 at 2.6 % -> 0.01, not 0.00
+        cart.add(Product(sku, "Chewing gum", Decimal("0.10"), VatCategory.REDUCED))
+    result = quote(cart, today=TODAY)
+    vat = {line.category: line.vat for line in result.vat_lines}
+    assert vat == {VatCategory.STANDARD: Decimal("0.02"), VatCategory.REDUCED: Decimal("0.01")}
+    assert result.vat_total == Decimal("0.03")
+    assert result.total == Decimal("0.63")
+
+
+def test_multiple_rates_and_totals_with_a_coupon(cart: Cart) -> None:
+    coupon = Coupon("WELCOME10", CouponKind.PERCENT, Decimal("10"), min_subtotal=Decimal("20.00"))
+    result = quote(cart, today=TODAY, coupon=coupon)
+    vat = {line.category: line.vat for line in result.vat_lines}
+    assert vat == {VatCategory.STANDARD: Decimal("2.62"), VatCategory.REDUCED: Decimal("0.93")}
+    assert result.vat_total == sum(vat.values(), Decimal("0.00"))
+    assert result.total == result.subtotal - result.discount + result.vat_total
+
+
+def test_categories_sharing_a_rate_split_that_rates_vat() -> None:
+    # Both categories at 10 %: 0.25 + 0.25 = 0.50 -> VAT 0.05 once, not 0.03 + 0.03.
+    rates = VatRates(
+        {
+            VatCategory.STANDARD: Decimal("10"),
+            VatCategory.REDUCED: Decimal("10"),
+            VatCategory.ACCOMMODATION: Decimal("10"),
+            VatCategory.EXEMPT: Decimal("0"),
+        }
+    )
+    cart = Cart()
+    cart.add(Product("A-ONE", "Item A", Decimal("0.25"), VatCategory.STANDARD))
+    cart.add(Product("B-ONE", "Item B", Decimal("0.25"), VatCategory.REDUCED))
+    result = quote(cart, today=TODAY, rates=rates)
+    assert result.vat_total == Decimal("0.05")
+
+
+def test_half_cent_vat_rounds_half_up_in_a_quote() -> None:
+    rates = dict(SWISS_RATES.rates)
+    rates[VatCategory.STANDARD] = Decimal("10")
+    cart = Cart()
+    cart.add(Product("PEN-BLUE", "Ballpoint pen", Decimal("0.25"), VatCategory.STANDARD))
+    result = quote(cart, today=TODAY, rates=VatRates(rates))
+    assert result.vat_total == Decimal("0.03")  # 0.025 -> 0.03
 
 
 def test_an_empty_cart_has_a_zero_quote() -> None:

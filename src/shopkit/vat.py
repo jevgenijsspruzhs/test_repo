@@ -53,7 +53,7 @@ SWISS_RATES = VatRates(
 
 
 def vat_amount(net: Decimal, rate_percent: Decimal) -> Decimal:
-    """The VAT on a net amount, rounded to the cent."""
+    """The VAT on a net amount, rounded to the cent, half up."""
     return round_cents(net * rate_percent / 100)
 
 
