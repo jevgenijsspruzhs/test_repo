@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -116,3 +117,60 @@ def test_unreadable_files(tmp_path: Path) -> None:
     broken.write_text("{not json", encoding="utf-8")
     with pytest.raises(CartFileError, match="invalid JSON"):
         load_cart(broken)
+
+
+COUPON = {"code": "FIVEOFF", "kind": "fixed", "value": "5.00"}
+
+
+def _write_coupons(tmp_path: Path, document: object) -> Path:
+    path = tmp_path / "coupons.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    return path
+
+
+def test_coupon_file_is_not_a_list(tmp_path: Path) -> None:
+    path = _write_coupons(tmp_path, {"code": "FIVEOFF"})
+    with pytest.raises(CartFileError, match=r"coupons: expected a list"):
+        load_coupons(path)
+
+
+def test_coupon_entry_is_not_an_object(tmp_path: Path) -> None:
+    path = _write_coupons(tmp_path, [COUPON, "FIVEOFF"])
+    with pytest.raises(CartFileError, match=r"coupons\[1\]: expected an object"):
+        load_coupons(path)
+
+
+def test_coupon_missing_code(tmp_path: Path) -> None:
+    entry = {key: value for key, value in COUPON.items() if key != "code"}
+    path = _write_coupons(tmp_path, [COUPON, entry])
+    with pytest.raises(CartFileError, match=r"coupons\[1\]\.code: missing"):
+        load_coupons(path)
+
+
+# The loader names the entry (``coupons[N]``) for amount and date errors but not the field.
+# These tests pin the exact message, so the entry position and the offending value are checked.
+@pytest.mark.parametrize(
+    ("value", "reason"),
+    [
+        ("five", "not a valid amount"),
+        ("-5.00", "amount must not be negative"),
+        ("5.001", "amount has more than two decimal places"),
+    ],
+)
+def test_coupon_invalid_discount_value(tmp_path: Path, value: str, reason: str) -> None:
+    path = _write_coupons(tmp_path, [COUPON, {**COUPON, "value": value}])
+    expected = re.escape(f"coupons[1]: {reason}: {value!r}")
+    with pytest.raises(CartFileError, match=rf"^{expected}$"):
+        load_coupons(path)
+
+
+def test_coupon_invalid_date(tmp_path: Path) -> None:
+    path = _write_coupons(tmp_path, [COUPON, {**COUPON, "valid_until": "31.12.2030"}])
+    with pytest.raises(CartFileError, match=r"^coupons\[1\]: .*'31\.12\.2030'$"):
+        load_coupons(path)
+
+
+def test_coupon_file_not_found(tmp_path: Path) -> None:
+    missing = tmp_path / "missing-coupons.json"
+    with pytest.raises(CartFileError, match=re.escape(f"{missing}: file not found")):
+        load_coupons(missing)
