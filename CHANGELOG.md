@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+
+- `shopkit coupons <file>` lists the coupons in a coupon file, one line per coupon in file order.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3

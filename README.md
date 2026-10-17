@@ -17,6 +17,20 @@ Total                          CHF 75.37
 Total (cash)                   CHF 75.35
 ```
 
+To check which coupons a coupon file contains, list them. Each coupon is printed on its own
+line, in file order, as its code, discount, last valid day (or `no end date`) and minimum cart
+value when it has one:
+
+```console
+$ python -m shopkit coupons examples/coupons.json
+WELCOME10  10%  2030-12-31  min CHF 20.00
+FIVEOFF  CHF 5.00  no end date  min CHF 30.00
+SPRING15  15%  2026-05-31
+```
+
+A file that cannot be read or does not have the coupon format prints an error and exits with
+status 2.
+
 ## Features
 
 - **Products and cart:** net unit prices (excluding VAT), one line per SKU, quantities 1–999.

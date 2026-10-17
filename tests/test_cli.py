@@ -66,6 +66,43 @@ def test_an_invalid_date_is_a_usage_error(capsys: pytest.CaptureFixture[str]) ->
     assert "not a date" in capsys.readouterr().err
 
 
+def test_coupons_lists_one_line_per_coupon_in_file_order(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["coupons", COUPONS]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "WELCOME10  10%  2030-12-31  min CHF 20.00",
+        "FIVEOFF  CHF 5.00  no end date  min CHF 30.00",
+        "SPRING15  15%  2026-05-31",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("content", "reason"),
+    [
+        ('[{"code": "BROKEN", "kind": "percent"', "invalid JSON"),
+        ('{"code": "WELCOME10"}', "coupons: expected a list"),
+        ('[{"code": "X1", "kind": "bogus", "value": "1"}]', "coupons[0]"),
+    ],
+)
+def test_coupons_with_an_invalid_file_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], content: str, reason: str
+) -> None:
+    path = tmp_path / "coupons.json"
+    path.write_text(content, encoding="utf-8")
+    assert main(["coupons", str(path)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert reason in captured.err
+
+
+def test_coupons_with_a_missing_file_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["coupons", str(tmp_path / "nope.json")]) == 2
+    assert "file not found" in capsys.readouterr().err
+
+
 def test_module_entry_point() -> None:
     completed = subprocess.run(
         [sys.executable, "-m", "shopkit", "--version"],
