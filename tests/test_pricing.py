@@ -72,7 +72,10 @@ def test_an_empty_cart_has_a_zero_quote() -> None:
     result = quote(Cart(), today=TODAY)
     assert result.lines == ()
     assert result.vat_lines == ()
+    assert result.subtotal == Decimal("0.00")
+    assert result.discount == Decimal("0.00")
     assert result.total == Decimal("0.00")
+    assert result.cash_total == Decimal("0.00")
 
 
 def test_single_category_cart() -> None:
