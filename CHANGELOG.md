@@ -10,6 +10,11 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Fixed
+
+- A coupon's `valid_until` date is now inclusive: a coupon is accepted on its last valid day and
+  reported as expired from the day after. Previously it was rejected on the last day itself.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
