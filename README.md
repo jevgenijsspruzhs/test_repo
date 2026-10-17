@@ -21,7 +21,9 @@ Total (cash)                   CHF 75.35
 
 - **Products and cart:** net unit prices (excluding VAT), one line per SKU, quantities 1–999.
 - **VAT:** the Swiss rates (8.1 % standard, 2.6 % reduced, 3.8 % accommodation, exempt) as plain
-  configuration (`shopkit.vat.SWISS_RATES`); pass your own `VatRates` for other rates.
+  configuration (`shopkit.vat.SWISS_RATES`); pass your own `VatRates` for other rates. VAT is
+  computed once per rate on that rate's total (after any coupon discount) and rounded half up to
+  the cent, so individual lines are not rounded.
 - **Coupons:** a percentage or a fixed amount off the net subtotal, with an optional last valid
   day and a minimum subtotal.
 - **Money:** `Decimal` only; amounts round to the cent (half up), cash totals to 5 Rappen.

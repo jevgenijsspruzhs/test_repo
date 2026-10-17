@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 
 from shopkit.cart import Cart
+from shopkit.catalog import Product
 from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
 from shopkit.pricing import allocate, quote
@@ -13,6 +14,10 @@ from shopkit.vat import SWISS_RATES, VatCategory, VatRates
 from tests.conftest import LAMP, MUG
 
 TODAY = date(2026, 10, 1)
+SWEET_A = Product("SWEET-A", "Sweet A", Decimal("0.10"), VatCategory.STANDARD)
+SWEET_B = Product("SWEET-B", "Sweet B", Decimal("0.10"), VatCategory.STANDARD)
+SWEET_C = Product("SWEET-C", "Sweet C", Decimal("0.10"), VatCategory.STANDARD)
+BISCUIT = Product("BISCUIT", "Biscuit", Decimal("0.10"), VatCategory.REDUCED)
 
 
 def test_quote_without_coupon(cart: Cart) -> None:
@@ -101,3 +106,55 @@ def test_allocate_always_adds_up(amount: str, weights: list[str], expected: list
 
 def test_allocate_nothing() -> None:
     assert allocate(Decimal("1.00"), []) == []
+
+
+def test_three_cheap_items_pay_vat_once_on_their_total() -> None:
+    # 3 x 0.10 = 0.30 at 8.1 % is 0.0243, which rounds to 0.02. Rounding each item first
+    # (0.0081 -> 0.01, three times) would give 0.03.
+    cart = Cart()
+    cart.add(SWEET_A)
+    cart.add(SWEET_B)
+    cart.add(SWEET_C)
+    result = quote(cart, today=TODAY)
+    assert [(v.category, v.taxable, v.vat) for v in result.vat_lines] == [
+        (VatCategory.STANDARD, Decimal("0.30"), Decimal("0.02")),
+    ]
+    assert result.vat_total == Decimal("0.02")
+    assert result.total == Decimal("0.32")
+
+
+def test_three_cheap_items_of_one_sku_pay_vat_once_on_their_total() -> None:
+    cart = Cart()
+    cart.add(SWEET_A, 3)
+    result = quote(cart, today=TODAY)
+    assert result.vat_total == Decimal("0.02")
+
+
+def test_each_vat_rate_is_rounded_separately() -> None:
+    # Standard: 0.30 * 8.1 % = 0.0243 -> 0.02. Reduced: 0.30 * 2.6 % = 0.0078 -> 0.01.
+    cart = Cart()
+    cart.add(SWEET_A, 3)
+    cart.add(BISCUIT, 3)
+    result = quote(cart, today=TODAY)
+    vat = {line.category: line.vat for line in result.vat_lines}
+    assert vat == {VatCategory.STANDARD: Decimal("0.02"), VatCategory.REDUCED: Decimal("0.01")}
+    assert result.vat_total == Decimal("0.03")
+
+
+def test_coupon_discount_is_taken_before_vat_per_rate() -> None:
+    cart = Cart()
+    cart.add(SWEET_A, 3)
+    cart.add(SWEET_B, 3)
+    cart.add(BISCUIT, 3)
+    coupon = Coupon("TENOFF", CouponKind.PERCENT, Decimal("10"))
+    result = quote(cart, today=TODAY, coupon=coupon)
+    assert result.subtotal == Decimal("0.90")
+    assert result.discount == Decimal("0.09")
+    vat = {line.category: (line.taxable, line.vat) for line in result.vat_lines}
+    # Standard: 0.54 * 8.1 % = 0.04374 -> 0.04. Reduced: 0.27 * 2.6 % = 0.00702 -> 0.01.
+    assert vat == {
+        VatCategory.STANDARD: (Decimal("0.54"), Decimal("0.04")),
+        VatCategory.REDUCED: (Decimal("0.27"), Decimal("0.01")),
+    }
+    assert result.total == result.subtotal - result.discount + result.vat_total
+    assert result.total == Decimal("0.86")
