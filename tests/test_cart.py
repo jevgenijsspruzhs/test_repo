@@ -62,5 +62,20 @@ def test_an_empty_cart() -> None:
     cart = Cart()
     assert cart.is_empty
     assert cart.subtotal == Decimal("0.00")
+    assert cart.item_count == 0
     cart.add(BOOK)
     assert not cart.is_empty
+
+
+def test_item_count_sums_the_quantities_of_all_lines() -> None:
+    cart = Cart()
+    cart.add(TEA, 3)
+    cart.add(MUG, 2)
+    cart.add(BOOK, 1)
+    cart.add(TEA, 4)  # adding the same SKU again adds to its line
+    assert [line.quantity for line in cart.lines] == [7, 2, 1]
+    assert cart.item_count == 10
+    cart.set_quantity("MUG-STONE", 5)
+    assert cart.item_count == 13
+    cart.remove("BOOK-BREW")
+    assert cart.item_count == 12
