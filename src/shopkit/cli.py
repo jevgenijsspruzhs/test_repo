@@ -41,8 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def render(result: Quote) -> str:
-    """A plain-text quote, one row per line item."""
-    width = max(len(line.name) for line in result.lines)
+    """A plain-text quote: one row per line item, then the totals. Empty carts get totals only."""
+    width = max((len(line.name) for line in result.lines), default=0)
     rows = [
         f"{line.quantity:>3} x {line.name:<{width}}  {format_chf(line.net):>14}"
         for line in result.lines
