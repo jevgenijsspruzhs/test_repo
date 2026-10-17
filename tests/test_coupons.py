@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.coupons import Coupon, CouponBook, CouponKind
+from shopkit.coupons import Coupon, CouponBook, CouponKind, format_coupon
 from shopkit.errors import CouponError, InvalidAmountError
 
 TODAY = date(2026, 10, 1)
@@ -76,3 +76,30 @@ def test_unknown_code() -> None:
 def test_duplicate_codes_are_rejected() -> None:
     with pytest.raises(ValueError, match="duplicate coupon code"):
         CouponBook([FIVE_OFF, FIVE_OFF])
+
+
+def _words(line: str) -> str:
+    """The line with runs of spaces collapsed, so the column padding does not matter."""
+    return " ".join(line.split())
+
+
+def test_format_a_percentage_coupon_with_end_and_minimum() -> None:
+    assert _words(format_coupon(WELCOME)) == "WELCOME10 10% 2026-12-31 min CHF 20.00"
+
+
+def test_format_a_fixed_coupon_without_end_date_or_minimum() -> None:
+    assert _words(format_coupon(FIVE_OFF)) == "FIVEOFF CHF 5.00 no end date"
+
+
+def test_format_a_fixed_coupon_with_a_minimum() -> None:
+    coupon = Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("30.00"))
+    assert _words(format_coupon(coupon)) == "FIVEOFF CHF 5.00 no end date min CHF 30.00"
+
+
+def test_format_a_percentage_without_end_date_or_minimum() -> None:
+    coupon = Coupon("HALFPRICE", CouponKind.PERCENT, Decimal("12.50"))
+    assert _words(format_coupon(coupon)) == "HALFPRICE 12.5% no end date"
+
+
+def test_format_has_no_trailing_spaces() -> None:
+    assert format_coupon(FIVE_OFF) == format_coupon(FIVE_OFF).rstrip()

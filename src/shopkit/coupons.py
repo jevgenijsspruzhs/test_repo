@@ -10,7 +10,7 @@ from decimal import Decimal
 from enum import StrEnum
 
 from shopkit.errors import CouponError, InvalidAmountError
-from shopkit.money import ZERO, percent_of
+from shopkit.money import ZERO, format_chf, percent_of
 
 CODE_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9-]{2,31}$")
 
@@ -59,6 +59,24 @@ class Coupon:
         if self.kind is CouponKind.PERCENT:
             return percent_of(subtotal, self.value)
         return self.value
+
+
+def format_coupon(coupon: Coupon) -> str:
+    """One line describing a coupon, for people: code, discount, last valid day, minimum.
+
+    The discount is ``10%`` or ``CHF 5.00``; the last valid day is an ISO date, or ``no end
+    date`` when the coupon never expires; ``min CHF 20.00`` is appended only when the coupon has
+    a minimum subtotal. Nothing is checked against today's date.
+    """
+    if coupon.kind is CouponKind.PERCENT:
+        discount = f"{coupon.value.normalize():f}%"
+    else:
+        discount = format_chf(coupon.value)
+    ends = "no end date" if coupon.valid_until is None else coupon.valid_until.isoformat()
+    line = f"{coupon.code:<32}  {discount:>10}  {ends:<11}"
+    if coupon.min_subtotal:
+        line += f"  min {format_chf(coupon.min_subtotal)}"
+    return line.rstrip()
 
 
 class CouponBook:
