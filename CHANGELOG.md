@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+
+- `shopkit coupons <file>` lists the coupons in a coupon file, one line each: code, discount,
+  last valid day or `no end date`, and the minimum cart value if there is one.
+
 - Polis smoke change for PT-2
 
 - Polis smoke change for TSTPRJ-3

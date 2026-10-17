@@ -2,7 +2,7 @@
 
 A small e-commerce domain library in Python: products, a shopping cart, coupon codes and Swiss
 VAT, with money handled as `Decimal` and explicit rounding. It also ships a small command line
-tool that prints a priced quote for a cart file.
+tool that prints a priced quote for a cart file, and lists the coupons in a coupon file.
 
 ```console
 $ python -m shopkit quote examples/cart.json --coupons examples/coupons.json --today 2026-10-01
@@ -58,6 +58,23 @@ for the release history.
 Prices are strings so they are never parsed as floats. `vat` is one of `standard` (default),
 `reduced`, `accommodation` or `exempt`. Coupons come from a separate file (`--coupons`); see
 `examples/coupons.json`.
+
+## Listing coupons
+
+`shopkit coupons <file>` prints one line per coupon in the file, in file order, without you
+having to read the JSON. Each line gives the code, the discount, the last valid day (or
+`no end date`), and the minimum cart value when the coupon has one. The dates are not checked
+against today, so expired coupons are listed too.
+
+```console
+$ python -m shopkit coupons examples/coupons.json
+WELCOME10                                10%  2030-12-31   min CHF 20.00
+FIVEOFF                             CHF 5.00  no end date  min CHF 30.00
+SPRING15                                 15%  2026-05-31
+```
+
+The command exits 0 on success. If the file cannot be read or does not match the coupon file
+format, it prints an error to standard error and exits 2, like `quote`.
 
 ## License
 
