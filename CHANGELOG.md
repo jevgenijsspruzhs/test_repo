@@ -10,6 +10,11 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Fixed
+
+- Coupon codes are matched regardless of letter case: `welcome10` gives the same coupon as
+  `WELCOME10`. Unknown codes are still rejected.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

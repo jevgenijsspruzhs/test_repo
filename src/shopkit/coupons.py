@@ -72,9 +72,9 @@ class CouponBook:
             self._by_code[coupon.code] = coupon
 
     def find(self, code: str) -> Coupon:
-        """The coupon for a code as a customer typed it."""
+        """The coupon for a code as a customer typed it; the match ignores letter case."""
         try:
-            return self._by_code[code]
+            return self._by_code[code.strip().upper()]
         except KeyError:
             raise CouponError("unknown_code") from None
 
