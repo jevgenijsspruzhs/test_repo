@@ -19,6 +19,11 @@ def test_vat_amount_rounds_to_the_cent() -> None:
     assert vat_amount(Decimal("32.40"), Decimal("8.1")) == Decimal("2.62")
 
 
+def test_vat_on_a_zero_taxable_amount_is_zero() -> None:
+    for category in VatCategory:
+        assert vat_amount(Decimal("0.00"), SWISS_RATES.rate(category)) == Decimal("0.00")
+
+
 def test_custom_rates_must_cover_every_category() -> None:
     with pytest.raises(ValueError, match="missing"):
         VatRates({VatCategory.STANDARD: Decimal("7.7")})
