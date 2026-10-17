@@ -76,3 +76,21 @@ def test_unknown_code() -> None:
 def test_duplicate_codes_are_rejected() -> None:
     with pytest.raises(ValueError, match="duplicate coupon code"):
         CouponBook([FIVE_OFF, FIVE_OFF])
+
+
+def test_a_fixed_discount_is_capped_at_the_subtotal() -> None:
+    gift = Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00"))
+    assert gift.discount_for(Decimal("30.00")) == Decimal("30.00")
+    assert gift.discount_for(Decimal("0.00")) == Decimal("0.00")
+
+
+def test_a_fixed_discount_below_the_subtotal_is_unchanged() -> None:
+    gift = Coupon("GIFT20", CouponKind.FIXED, Decimal("20.00"))
+    assert gift.discount_for(Decimal("30.00")) == Decimal("20.00")
+    assert gift.discount_for(Decimal("20.00")) == Decimal("20.00")
+
+
+def test_a_percentage_discount_is_unchanged_by_the_cap() -> None:
+    assert WELCOME.discount_for(Decimal("30.00")) == Decimal("3.00")
+    everything = Coupon("ALL", CouponKind.PERCENT, Decimal("100"))
+    assert everything.discount_for(Decimal("30.00")) == Decimal("30.00")

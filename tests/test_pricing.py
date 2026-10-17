@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 
 from shopkit.cart import Cart
+from shopkit.catalog import Product
 from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
 from shopkit.pricing import allocate, quote
@@ -101,3 +102,19 @@ def test_allocate_always_adds_up(amount: str, weights: list[str], expected: list
 
 def test_allocate_nothing() -> None:
     assert allocate(Decimal("1.00"), []) == []
+
+
+def test_a_gift_coupon_larger_than_the_cart_is_capped_at_the_subtotal() -> None:
+    # CHF 50 gift coupon on a CHF 30 cart: the discount is capped at the subtotal.
+    cart = Cart()
+    cart.add(Product("VOUCHER-30", "Gift card base", Decimal("30.00"), VatCategory.STANDARD))
+    result = quote(cart, today=TODAY, coupon=Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00")))
+    assert result.subtotal == Decimal("30.00")
+    assert result.discount == Decimal("30.00")
+    assert [line.taxable for line in result.lines] == [Decimal("0.00")]
+    assert [(vat.taxable, vat.vat) for vat in result.vat_lines] == [
+        (Decimal("0.00"), Decimal("0.00")),
+    ]
+    assert result.vat_total == Decimal("0.00")
+    assert result.total == Decimal("0.00")
+    assert result.cash_total == Decimal("0.00")
