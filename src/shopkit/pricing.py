@@ -108,7 +108,8 @@ def quote(
     discount = ZERO
     if coupon is not None:
         coupon.check(subtotal, today)
-        discount = coupon.discount_for(subtotal)
+        # Never discount more than the subtotal: taxable amounts and totals stay non-negative.
+        discount = min(coupon.discount_for(subtotal), subtotal)
     shares = allocate(discount, [line.net for line in cart.lines])
     lines = tuple(
         QuoteLine(

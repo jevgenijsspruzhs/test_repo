@@ -35,3 +35,8 @@ def test_parse_category() -> None:
     assert parse_category(" Reduced ") is VatCategory.REDUCED
     with pytest.raises(ValueError, match="unknown VAT category"):
         parse_category("luxury")
+
+
+def test_vat_on_a_fully_discounted_base_is_zero() -> None:
+    assert vat_amount(Decimal("0.00"), Decimal("8.1")) == Decimal("0.00")
+    assert vat_amount(Decimal("0.00"), Decimal("2.6")) == Decimal("0.00")
