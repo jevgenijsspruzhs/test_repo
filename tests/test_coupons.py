@@ -38,6 +38,27 @@ def test_an_expired_coupon_is_rejected() -> None:
     assert excinfo.value.reason == "expired"
 
 
+@pytest.mark.parametrize(
+    ("today", "accepted"),
+    [
+        (date(2026, 12, 30), True),
+        (date(2026, 12, 31), True),  # last valid day: valid_until is inclusive
+        (date(2027, 1, 1), False),  # the day after: expired
+    ],
+)
+def test_valid_until_is_inclusive(today: date, accepted: bool) -> None:
+    if accepted:
+        WELCOME.check(Decimal("79.70"), today)
+    else:
+        with pytest.raises(CouponError) as excinfo:
+            WELCOME.check(Decimal("79.70"), today)
+        assert excinfo.value.reason == "expired"
+
+
+def test_a_coupon_without_an_end_date_never_expires() -> None:
+    FIVE_OFF.check(Decimal("79.70"), date(2099, 12, 31))
+
+
 def test_a_cart_below_the_minimum_is_rejected() -> None:
     with pytest.raises(CouponError) as excinfo:
         WELCOME.check(Decimal("19.99"), TODAY)
