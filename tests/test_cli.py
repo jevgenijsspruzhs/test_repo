@@ -33,6 +33,23 @@ def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert result["cash_total"] == "75.35"
 
 
+def test_an_empty_cart_prints_a_zero_quote(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cart_file = tmp_path / "cart.json"
+    cart_file.write_text(json.dumps({"lines": []}), encoding="utf-8")
+    assert main(["quote", str(cart_file), "--today", "2026-10-01"]) == 0
+    output = capsys.readouterr().out
+    assert "Traceback" not in output
+    lines = output.splitlines()
+    assert lines[-3].endswith("CHF 0.00")  # Subtotal
+    assert lines[-2].endswith("CHF 0.00")  # Total
+    assert lines[-1].endswith("CHF 0.00")  # Total (cash)
+    assert lines[-3].startswith("Subtotal")
+    assert lines[-2].startswith("Total ")
+    assert lines[-1].startswith("Total (cash)")
+
+
 def test_the_coupon_option_overrides_the_cart(capsys: pytest.CaptureFixture[str]) -> None:
     args = ["quote", CART, "--coupons", COUPONS, "--coupon", "FIVEOFF", "--today", "2026-10-01"]
     assert main([*args, "--json"]) == 0
