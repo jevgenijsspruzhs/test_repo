@@ -10,6 +10,11 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Changed
+
+- Internal refactor of the text quote: product and total rows share one row formatter. The
+  output is unchanged.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

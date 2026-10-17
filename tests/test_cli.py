@@ -24,6 +24,26 @@ def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert output.splitlines()[-1].endswith("CHF 75.35")
 
 
+# The complete text output for a cart with a coupon and two VAT rates (standard and reduced).
+# Pins the column layout: a change to any row's width or alignment must show up here.
+GOLDEN_TEXT_QUOTE = (
+    "  3 x Green tea, 100 g         CHF 14.70\n"
+    "  2 x Stoneware mug            CHF 36.00\n"
+    "  1 x The Art of Brewing       CHF 29.00\n"
+    "Subtotal                       CHF 79.70\n"
+    "Coupon WELCOME10               -CHF 7.97\n"
+    "VAT 8.1% (standard)             CHF 2.62\n"
+    "VAT 2.6% (reduced)              CHF 1.02\n"
+    "Total                          CHF 75.37\n"
+    "Total (cash)                   CHF 75.35\n"
+)
+
+
+def test_text_quote_golden_output(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01"]) == 0
+    assert capsys.readouterr().out == GOLDEN_TEXT_QUOTE
+
+
 def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01", "--json"]) == 0
     result = json.loads(capsys.readouterr().out)
