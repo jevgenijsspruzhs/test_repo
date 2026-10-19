@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Fixed
 
+- A coupon's `valid_until` date is now inclusive: a coupon is accepted on its last valid day and
+  rejected from the day after. Previously it was rejected on its last day (e.g. XMAS on 31
+  December).
 - Coupon codes are matched case-insensitively, so `welcome10` gives the same coupon as `WELCOME10`.
 - VAT is computed once per rate on that rate's total, rounded half up to the cent, instead of per
   line item. Carts with many cheap items no longer get VAT a few Rappen too high: three items at

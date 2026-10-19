@@ -49,7 +49,7 @@ class Coupon:
 
     def check(self, subtotal: Decimal, today: date) -> None:
         """Raise :class:`CouponError` unless the coupon can be used for this subtotal today."""
-        if self.valid_until is not None and today >= self.valid_until:
+        if self.valid_until is not None and today > self.valid_until:
             raise CouponError("expired")
         if self.min_subtotal and subtotal <= self.min_subtotal:
             raise CouponError("below_minimum")
