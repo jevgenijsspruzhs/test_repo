@@ -13,6 +13,10 @@ All notable changes to this project are documented in this file. The format is b
 ### Fixed
 
 - Coupon codes are matched case-insensitively, so `welcome10` gives the same coupon as `WELCOME10`.
+- VAT is computed once per rate on that rate's total, rounded half up to the cent, instead of per
+  line item. Carts with many cheap items no longer get VAT a few Rappen too high: three items at
+  CHF 0.10 at 8.1 % now give VAT CHF 0.02 (previously CHF 0.03). Invoice totals can change by a
+  few Rappen.
 
 ## [0.3.0] - 2026-09-28
 

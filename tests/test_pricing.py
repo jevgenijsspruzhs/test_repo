@@ -6,9 +6,10 @@ from decimal import Decimal
 import pytest
 
 from shopkit.cart import Cart
+from shopkit.catalog import Product
 from shopkit.coupons import Coupon, CouponKind
 from shopkit.errors import CouponError
-from shopkit.pricing import allocate, quote
+from shopkit.pricing import VatLine, allocate, quote
 from shopkit.vat import SWISS_RATES, VatCategory, VatRates
 from tests.conftest import LAMP, MUG
 
@@ -101,3 +102,32 @@ def test_allocate_always_adds_up(amount: str, weights: list[str], expected: list
 
 def test_allocate_nothing() -> None:
     assert allocate(Decimal("1.00"), []) == []
+
+
+CHEAP = Product("PIN-CHEAP", "Pin", Decimal("0.10"), VatCategory.STANDARD)
+CHEAP_REDUCED = Product("PIN-REDUCED", "Reduced pin", Decimal("0.10"), VatCategory.REDUCED)
+
+
+def test_vat_is_computed_once_per_rate_not_per_line() -> None:
+    # Three items at CHF 0.10: 0.30 * 8.1 % = 0.0243 -> 0.02. Per line it would be 3 x 0.01 = 0.03.
+    cart = Cart()
+    cart.add(CHEAP, 3)
+    result = quote(cart, today=TODAY)
+    assert result.vat_lines == (
+        VatLine(VatCategory.STANDARD, Decimal("8.1"), Decimal("0.30"), Decimal("0.02")),
+    )
+    assert result.vat_total == Decimal("0.02")
+    assert result.total == Decimal("0.32")
+
+
+def test_vat_lines_group_by_rate() -> None:
+    cart = Cart()
+    cart.add(CHEAP, 3)
+    cart.add(CHEAP_REDUCED, 3)
+    result = quote(cart, today=TODAY)
+    # Standard: 0.30 * 8.1 % = 0.0243 -> 0.02. Reduced: 0.30 * 2.6 % = 0.0078 -> 0.01.
+    assert result.vat_lines == (
+        VatLine(VatCategory.STANDARD, Decimal("8.1"), Decimal("0.30"), Decimal("0.02")),
+        VatLine(VatCategory.REDUCED, Decimal("2.6"), Decimal("0.30"), Decimal("0.01")),
+    )
+    assert result.vat_total == Decimal("0.03")
