@@ -72,9 +72,13 @@ class CouponBook:
             self._by_code[coupon.code] = coupon
 
     def find(self, code: str) -> Coupon:
-        """The coupon for a code as a customer typed it."""
+        """The coupon for a code as a customer typed it.
+
+        Codes are matched case-insensitively and ignore surrounding whitespace, so ``welcome10``
+        finds ``WELCOME10``. Stored codes are always upper case (see :class:`Coupon`).
+        """
         try:
-            return self._by_code[code]
+            return self._by_code[code.strip().upper()]
         except KeyError:
             raise CouponError("unknown_code") from None
 

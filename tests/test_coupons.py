@@ -67,9 +67,22 @@ def test_find_by_code() -> None:
     assert list(book) == [WELCOME, FIVE_OFF]
 
 
+@pytest.mark.parametrize("typed", ["welcome10", "Welcome10", "  welcome10 "])
+def test_find_ignores_letter_case(typed: str) -> None:
+    book = CouponBook([WELCOME, FIVE_OFF])
+    assert book.find(typed) is book.find("WELCOME10") is WELCOME
+
+
 def test_unknown_code() -> None:
     with pytest.raises(CouponError) as excinfo:
         CouponBook([WELCOME]).find("NOPE")
+    assert excinfo.value.reason == "unknown_code"
+
+
+@pytest.mark.parametrize("typed", ["nope", "Nope", "fiveoff-x"])
+def test_unknown_code_is_rejected_in_any_case(typed: str) -> None:
+    with pytest.raises(CouponError) as excinfo:
+        CouponBook([WELCOME, FIVE_OFF]).find(typed)
     assert excinfo.value.reason == "unknown_code"
 
 
