@@ -55,10 +55,14 @@ class Coupon:
             raise CouponError("below_minimum")
 
     def discount_for(self, subtotal: Decimal) -> Decimal:
-        """The discount in CHF for a net subtotal (call :meth:`check` first)."""
+        """The discount in CHF for a net subtotal (call :meth:`check` first).
+
+        The discount is never larger than the subtotal: a CHF 50 coupon on a CHF 30 cart gives a
+        discount of CHF 30.00.
+        """
         if self.kind is CouponKind.PERCENT:
-            return percent_of(subtotal, self.value)
-        return self.value
+            return min(percent_of(subtotal, self.value), subtotal)
+        return min(self.value, subtotal)
 
 
 class CouponBook:

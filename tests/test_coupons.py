@@ -104,3 +104,19 @@ def test_unknown_code_is_rejected_in_any_case(typed: str) -> None:
 def test_duplicate_codes_are_rejected() -> None:
     with pytest.raises(ValueError, match="duplicate coupon code"):
         CouponBook([FIVE_OFF, FIVE_OFF])
+
+
+def test_a_fixed_discount_is_capped_at_the_subtotal() -> None:
+    fifty = Coupon("FIFTYOFF", CouponKind.FIXED, Decimal("50.00"))
+    assert fifty.discount_for(Decimal("30.00")) == Decimal("30.00")
+
+
+def test_a_fixed_discount_equal_to_the_subtotal_is_unchanged() -> None:
+    fifty = Coupon("FIFTYOFF", CouponKind.FIXED, Decimal("50.00"))
+    assert fifty.discount_for(Decimal("50.00")) == Decimal("50.00")
+
+
+def test_a_percentage_discount_is_unchanged_by_the_cap() -> None:
+    full = Coupon("FULLOFF", CouponKind.PERCENT, Decimal("100"))
+    assert full.discount_for(Decimal("30.00")) == Decimal("30.00")
+    assert WELCOME.discount_for(Decimal("30.00")) == Decimal("3.00")

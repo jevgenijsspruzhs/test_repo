@@ -131,3 +131,17 @@ def test_vat_lines_group_by_rate() -> None:
         VatLine(VatCategory.REDUCED, Decimal("2.6"), Decimal("0.30"), Decimal("0.01")),
     )
     assert result.vat_total == Decimal("0.03")
+
+
+def test_a_gift_coupon_larger_than_the_cart_is_capped_at_the_subtotal() -> None:
+    # Regression: a CHF 50 coupon on a CHF 30 cart gave a total of -CHF 21.62 and negative VAT.
+    cart = Cart()
+    cart.add(Product("GIFT-BOX", "Gift box", Decimal("30.00"), VatCategory.STANDARD))
+    coupon = Coupon("GIFT50", CouponKind.FIXED, Decimal("50.00"))
+    result = quote(cart, today=TODAY, coupon=coupon)
+    assert result.discount == Decimal("30.00")
+    assert result.total == Decimal("0.00")
+    assert result.cash_total == Decimal("0.00")
+    assert all(line.taxable == Decimal("0.00") for line in result.lines)
+    assert all(vat.taxable >= 0 and vat.vat >= 0 for vat in result.vat_lines)
+    assert result.vat_total == Decimal("0.00")
