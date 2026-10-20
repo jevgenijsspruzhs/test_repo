@@ -61,6 +61,20 @@ def test_an_invalid_coupon_stops_the_quote(cart: Cart) -> None:
         quote(cart, today=TODAY, coupon=coupon)
 
 
+def test_fiveoff_on_an_exact_minimum_cart_gives_chf_5_off() -> None:
+    thirty = Product("HAMPER-30", "Gift hamper", Decimal("30.00"), VatCategory.STANDARD)
+    cart = Cart()
+    cart.add(thirty)
+    fiveoff = Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("30.00"))
+    result = quote(cart, today=TODAY, coupon=fiveoff)
+    assert result.subtotal == Decimal("30.00")
+    assert result.discount == Decimal("5.00")
+    assert [line.taxable for line in result.lines] == [Decimal("25.00")]
+    # 25.00 at 8.1 % = 2.025, rounded half up to 2.03
+    assert result.vat_total == Decimal("2.03")
+    assert result.total == Decimal("27.03")
+
+
 def test_custom_vat_rates(cart: Cart) -> None:
     rates = dict(SWISS_RATES.rates)
     rates[VatCategory.STANDARD] = Decimal("10")

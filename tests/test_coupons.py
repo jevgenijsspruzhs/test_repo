@@ -60,6 +60,23 @@ def test_a_cart_below_the_minimum_is_rejected() -> None:
     assert "minimum" in str(excinfo.value)
 
 
+def test_a_cart_exactly_at_the_minimum_is_accepted() -> None:
+    WELCOME.check(Decimal("20.00"), TODAY)
+
+
+def test_fiveoff_on_an_exact_chf_30_net_cart_is_accepted() -> None:
+    fiveoff = Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("30.00"))
+    fiveoff.check(Decimal("30.00"), TODAY)
+    assert fiveoff.discount_for(Decimal("30.00")) == Decimal("5.00")
+
+
+def test_fiveoff_on_a_chf_29_99_net_cart_is_refused() -> None:
+    fiveoff = Coupon("FIVEOFF", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("30.00"))
+    with pytest.raises(CouponError) as excinfo:
+        fiveoff.check(Decimal("29.99"), TODAY)
+    assert excinfo.value.reason == "below_minimum"
+
+
 @pytest.mark.parametrize("code", ["", "AB", "welcome10", "WELCOME 10", "X" * 33])
 def test_invalid_codes(code: str) -> None:
     with pytest.raises(ValueError, match="invalid coupon code"):
