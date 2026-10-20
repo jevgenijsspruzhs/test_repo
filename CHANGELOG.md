@@ -12,6 +12,11 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Fixed
 
+- A coupon's minimum subtotal is now inclusive: a cart whose net subtotal (before VAT) is exactly
+  the minimum qualifies. FIVEOFF (CHF 5 off orders from CHF 30) was refused with `below_minimum`
+  on a CHF 30.00 cart; it now gives CHF 5 off. Carts below the minimum are still refused, and the
+  minimum is still measured on the net subtotal before VAT.
+
 - A fixed-amount coupon is capped at the cart subtotal. A CHF 50 coupon on a CHF 30 cart
   gave a negative total (-CHF 21.62) and negative VAT; the discount is now CHF 30.00, so the
   total and every VAT amount are CHF 0.00. Percentage coupons are unchanged.
