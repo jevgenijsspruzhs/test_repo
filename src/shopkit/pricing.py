@@ -4,7 +4,8 @@ The calculation follows a Swiss invoice:
 
 1. the subtotal is the sum of the line nets (prices exclude VAT);
 2. a coupon discount is taken off the subtotal and spread across the lines in proportion to
-   their nets, so each VAT category is taxed on its discounted amount;
+   their nets, so each VAT category is taxed on its discounted amount. The discount is never
+   larger than the subtotal, so no net, VAT or total is ever negative;
 3. VAT is computed once per rate on that rate's total taxable amount, rounded half up to the
    cent (never per line);
 4. the total is the discounted subtotal plus VAT; the cash total is rounded to 5 Rappen.

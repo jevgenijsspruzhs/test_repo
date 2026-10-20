@@ -12,6 +12,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Fixed
 
+- A fixed-amount coupon is capped at the cart subtotal. A CHF 50 coupon on a CHF 30 cart
+  gave a negative total (-CHF 21.62) and negative VAT; the discount is now CHF 30.00, so the
+  total and every VAT amount are CHF 0.00. Percentage coupons are unchanged.
+
 - A coupon's `valid_until` date is now inclusive: a coupon is accepted on its last valid day and
   rejected from the day after. Previously it was rejected on its last day (e.g. XMAS on 31
   December).
