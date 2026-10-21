@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Fixed
 
+- `python -m shopkit quote` no longer crashes with a traceback on an empty cart. It prints a quote
+  with subtotal, total and cash total of CHF 0.00 and exits 0, as `--json` already did.
+
 - A coupon's minimum subtotal is now inclusive: a cart whose net subtotal (before VAT) is exactly
   the minimum qualifies. FIVEOFF (CHF 5 off orders from CHF 30) was refused with `below_minimum`
   on a CHF 30.00 cart; it now gives CHF 5 off. Carts below the minimum are still refused, and the
