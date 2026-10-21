@@ -24,6 +24,40 @@ def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert output.splitlines()[-1].endswith("CHF 75.35")
 
 
+def test_the_text_quote_shows_the_item_count_after_the_subtotal(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    subtotal = next(i for i, line in enumerate(lines) if line.startswith("Subtotal"))
+    # 3 x tea + 2 x mug + 1 x book
+    assert lines[subtotal + 1] == "Items: 6"
+
+
+def test_the_json_quote_has_the_same_keys_and_no_item_count(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01", "--json"]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert set(result) == {
+        "lines",
+        "subtotal",
+        "coupon",
+        "discount",
+        "vat",
+        "total",
+        "cash_total",
+    }
+    assert set(result["lines"][0]) == {
+        "sku",
+        "quantity",
+        "net",
+        "discount",
+        "vat_category",
+    }
+    assert [line["quantity"] for line in result["lines"]] == [3, 2, 1]
+
+
 def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01", "--json"]) == 0
     result = json.loads(capsys.readouterr().out)
@@ -40,6 +74,7 @@ def test_an_empty_cart_quotes_zero(tmp_path: Path, capsys: pytest.CaptureFixture
     lines = capsys.readouterr().out.splitlines()
     assert [" ".join(line.split()) for line in lines] == [
         "Subtotal CHF 0.00",
+        "Items: 0",
         "Total CHF 0.00",
         "Total (cash) CHF 0.00",
     ]

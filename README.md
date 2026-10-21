@@ -10,6 +10,7 @@ $ python -m shopkit quote examples/cart.json --coupons examples/coupons.json --t
   2 x Stoneware mug            CHF 36.00
   1 x The Art of Brewing       CHF 29.00
 Subtotal                       CHF 79.70
+Items: 6
 Coupon WELCOME10               -CHF 7.97
 VAT 8.1% (standard)             CHF 2.62
 VAT 2.6% (reduced)              CHF 1.02

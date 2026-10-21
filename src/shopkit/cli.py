@@ -53,6 +53,7 @@ def render(result: Quote) -> str:
         return f"{label:<{label_width}}  {amount_text:>14}"
 
     rows.append(total_row("Subtotal", format_chf(result.subtotal)))
+    rows.append(f"Items: {result.item_count}")
     if result.coupon_code is not None:
         rows.append(total_row(f"Coupon {result.coupon_code}", "-" + format_chf(result.discount)))
     for vat in result.vat_lines:

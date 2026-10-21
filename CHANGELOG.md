@@ -10,6 +10,12 @@ All notable changes to this project are documented in this file. The format is b
 
 - Polis smoke change for TSTPRJ-3
 
+### Added
+
+- The text quote of `python -m shopkit quote` shows the number of items as `Items: N` on the
+  line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
+  is unchanged.
+
 ### Fixed
 
 - `python -m shopkit quote` no longer crashes with a traceback on an empty cart. It prints a quote

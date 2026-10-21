@@ -30,6 +30,10 @@ def test_quote_without_coupon(cart: Cart) -> None:
     assert result.cash_total == Decimal("79.65")
 
 
+def test_quote_item_count_sums_the_line_quantities(cart: Cart) -> None:
+    assert quote(cart, today=TODAY).item_count == 6
+
+
 def test_quote_with_a_percentage_coupon(cart: Cart) -> None:
     coupon = Coupon("WELCOME10", CouponKind.PERCENT, Decimal("10"), min_subtotal=Decimal("20.00"))
     result = quote(cart, today=TODAY, coupon=coupon)
