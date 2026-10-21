@@ -19,6 +19,24 @@ def test_subtotal_and_item_count(cart: Cart) -> None:
     assert cart.item_count == 6
 
 
+def test_item_count_sums_quantities_over_all_lines() -> None:
+    cart = Cart()
+    cart.add(TEA, 3)
+    cart.add(MUG, 2)
+    cart.add(BOOK, 1)
+    assert cart.item_count == 6
+
+
+def test_item_count_for_a_single_line() -> None:
+    cart = Cart()
+    cart.add(MUG, 4)
+    assert cart.item_count == 4
+
+
+def test_item_count_for_an_empty_cart() -> None:
+    assert Cart().item_count == 0
+
+
 def test_adding_a_product_again_increases_its_quantity() -> None:
     cart = Cart()
     cart.add(TEA, 2)
