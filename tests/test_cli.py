@@ -33,6 +33,18 @@ def test_json_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert result["cash_total"] == "75.35"
 
 
+def test_an_empty_cart_quotes_zero(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    cart_file = tmp_path / "empty.json"
+    cart_file.write_text(json.dumps({"lines": []}), encoding="utf-8")
+    assert main(["quote", str(cart_file)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert [" ".join(line.split()) for line in lines] == [
+        "Subtotal CHF 0.00",
+        "Total CHF 0.00",
+        "Total (cash) CHF 0.00",
+    ]
+
+
 def test_a_lower_case_coupon_code_is_accepted(capsys: pytest.CaptureFixture[str]) -> None:
     args = ["quote", CART, "--coupons", COUPONS, "--coupon", "welcome10", "--today", "2026-10-01"]
     assert main([*args, "--json"]) == 0
