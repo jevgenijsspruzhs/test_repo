@@ -18,6 +18,23 @@ Total                          CHF 75.37
 Total (cash)                   CHF 75.35
 ```
 
+## Listing coupons
+
+`shopkit coupons <file>` lists the coupons in a coupon file without opening the JSON. It prints one
+line per coupon, in file order: the code, the discount, the last valid day (inclusive) or
+`no end date`, and the minimum cart value if the coupon has one.
+
+```console
+$ python -m shopkit coupons examples/coupons.json
+WELCOME10  10%  2030-12-31  min CHF 20.00
+FIVEOFF  CHF 5.00  no end date  min CHF 30.00
+SPRING15  15%  2026-05-31
+```
+
+Percentages are shown without trailing zeros; fixed amounts and minimums are shown in CHF with
+two decimals, as stored in the file. The command exits with 0 on success. An unreadable file or
+one with the wrong format prints an error to stderr and exits with 2, as `quote` does.
+
 ## Features
 
 - **Products and cart:** net unit prices (excluding VAT), one line per SKU, quantities 1–999.

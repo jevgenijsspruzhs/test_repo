@@ -129,3 +129,60 @@ def test_module_entry_point() -> None:
         check=True,
     )
     assert completed.stdout.strip() == f"shopkit {__version__}"
+
+
+def test_coupons_lists_one_line_per_coupon_in_file_order(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["coupons", COUPONS]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "WELCOME10  10%  2030-12-31  min CHF 20.00",
+        "FIVEOFF  CHF 5.00  no end date  min CHF 30.00",
+        "SPRING15  15%  2026-05-31",
+    ]
+
+
+def test_coupons_lists_a_two_coupon_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    coupon_file = tmp_path / "two.json"
+    coupon_file.write_text(
+        json.dumps(
+            [
+                {"code": "ZETA", "kind": "fixed", "value": "2.50"},
+                {"code": "ALPHA", "kind": "percent", "value": "20", "valid_until": "2027-01-01"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["coupons", str(coupon_file)]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "ZETA  CHF 2.50  no end date",
+        "ALPHA  20%  2027-01-01",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        ('{"code": "NOPE"}', "coupons: expected a list"),
+        ('[{"code": "X1", "kind": "bogus", "value": "1"}]', "coupons[0]"),
+        ("[", "invalid JSON"),
+    ],
+)
+def test_coupons_with_an_invalid_file_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], content: str, message: str
+) -> None:
+    coupon_file = tmp_path / "bad.json"
+    coupon_file.write_text(content, encoding="utf-8")
+    assert main(["coupons", str(coupon_file)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert message in captured.err
+
+
+def test_coupons_with_a_missing_file_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["coupons", str(tmp_path / "nope.json")]) == 2
+    assert "file not found" in capsys.readouterr().err

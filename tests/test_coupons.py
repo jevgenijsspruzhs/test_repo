@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.coupons import Coupon, CouponBook, CouponKind
+from shopkit.coupons import Coupon, CouponBook, CouponKind, format_coupon_line
 from shopkit.errors import CouponError, InvalidAmountError
 
 TODAY = date(2026, 10, 1)
@@ -137,3 +137,26 @@ def test_a_percentage_discount_is_unchanged_by_the_cap() -> None:
     full = Coupon("FULLOFF", CouponKind.PERCENT, Decimal("100"))
     assert full.discount_for(Decimal("30.00")) == Decimal("30.00")
     assert WELCOME.discount_for(Decimal("30.00")) == Decimal("3.00")
+
+
+def test_a_percentage_line_has_no_trailing_zeros_and_an_inclusive_end_date() -> None:
+    assert format_coupon_line(WELCOME) == "WELCOME10  10%  2026-12-31  min CHF 20.00"
+
+
+def test_a_fixed_line_shows_chf_and_no_end_date() -> None:
+    assert format_coupon_line(FIVE_OFF) == "FIVEOFF  CHF 5.00  no end date"
+
+
+def test_a_fractional_percentage_keeps_its_decimals() -> None:
+    coupon = Coupon("HALFOFF", CouponKind.PERCENT, Decimal("12.50"))
+    assert format_coupon_line(coupon) == "HALFOFF  12.50%  no end date"
+
+
+def test_a_large_minimum_is_not_grouped() -> None:
+    coupon = Coupon("BIG", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("1234.00"))
+    assert format_coupon_line(coupon) == "BIG  CHF 5.00  no end date  min CHF 1234.00"
+
+
+def test_a_zero_minimum_is_not_shown() -> None:
+    coupon = Coupon("ZERO", CouponKind.FIXED, Decimal("5.00"), min_subtotal=Decimal("0.00"))
+    assert format_coupon_line(coupon) == "ZERO  CHF 5.00  no end date"
