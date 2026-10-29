@@ -91,3 +91,31 @@ class CouponBook:
 
     def __len__(self) -> int:
         return len(self._by_code)
+
+
+def format_coupon_line(coupon: Coupon) -> str:
+    """One line describing a coupon, for ``shopkit coupons``.
+
+    The line is ``CODE  DISCOUNT  END  [min CHF X]``, for example ``WELCOME10  10%  2030-12-31
+    min CHF 20.00`` or ``FIVEOFF  CHF 5.00  no end date``. Edge cases:
+
+    * A percentage is written without trailing zeros (``10.00`` becomes ``10%``); a fractional
+      percentage keeps its two decimals (``12.50%``).
+    * A fixed discount and a minimum are written with their two decimals as stored, never with
+      a thousands separator, so ``CHF 1234.00`` stays ``CHF 1234.00``.
+    * ``valid_until`` is the last day the coupon can be used, inclusive, so it is printed as is.
+      A coupon without one is shown as ``no end date``.
+    * A minimum of zero counts as no minimum (as in :meth:`Coupon.check`), so the ``min`` part is
+      left out when ``min_subtotal`` is zero.
+    * The line does not depend on the current date.
+    """
+    if coupon.kind is CouponKind.PERCENT:
+        value = coupon.value
+        discount = f"{int(value)}%" if value == value.to_integral_value() else f"{value}%"
+    else:
+        discount = f"CHF {coupon.value}"
+    end = "no end date" if coupon.valid_until is None else coupon.valid_until.isoformat()
+    parts = [coupon.code, discount, end]
+    if coupon.min_subtotal:
+        parts.append(f"min CHF {coupon.min_subtotal}")
+    return "  ".join(parts)

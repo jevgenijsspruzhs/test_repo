@@ -12,6 +12,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Added
 
+- `python -m shopkit coupons <file>` lists the coupons in a coupon file: one line per coupon, in
+  file order, with the code, the discount, the last valid day or `no end date`, and the minimum
+  cart value if set. An unreadable or malformed file exits with 2.
+
 - The text quote of `python -m shopkit quote` shows the number of items as `Items: N` on the
   line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
   is unchanged.
