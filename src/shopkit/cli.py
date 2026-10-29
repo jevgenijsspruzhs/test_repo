@@ -42,26 +42,39 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+AMOUNT_WIDTH = 14
+
+
+def _row(label: str, amount: str, label_width: int) -> str:
+    """One plain-text quote row: ``label`` left-aligned, then ``amount`` right-aligned.
+
+    The label is padded to ``label_width`` characters and the amount to ``AMOUNT_WIDTH``
+    characters, with two spaces between them. Edge cases are not clipped: a label longer than
+    ``label_width`` or an amount longer than ``AMOUNT_WIDTH`` is written in full, so that row
+    extends past the column and no longer lines up with the others.
+    """
+    return f"{label:<{label_width}}  {amount:>{AMOUNT_WIDTH}}"
+
+
 def render(result: Quote) -> str:
     """A plain-text quote, one row per line item."""
     width = max((len(line.name) for line in result.lines), default=0)
+    # Product labels are "qty x name", i.e. a 6-character prefix ("NNN x ") plus the name.
+    label_width = width + 6
     rows = [
-        f"{line.quantity:>3} x {line.name:<{width}}  {format_chf(line.net):>14}"
+        _row(f"{line.quantity:>3} x {line.name:<{width}}", format_chf(line.net), label_width)
         for line in result.lines
     ]
-    label_width = width + 6
-
-    def total_row(label: str, amount_text: str) -> str:
-        return f"{label:<{label_width}}  {amount_text:>14}"
-
-    rows.append(total_row("Subtotal", format_chf(result.subtotal)))
+    rows.append(_row("Subtotal", format_chf(result.subtotal), label_width))
     rows.append(f"Items: {result.item_count}")
     if result.coupon_code is not None:
-        rows.append(total_row(f"Coupon {result.coupon_code}", "-" + format_chf(result.discount)))
+        rows.append(
+            _row(f"Coupon {result.coupon_code}", "-" + format_chf(result.discount), label_width)
+        )
     for vat in result.vat_lines:
-        rows.append(total_row(f"VAT {vat.rate}% ({vat.category})", format_chf(vat.vat)))
-    rows.append(total_row("Total", format_chf(result.total)))
-    rows.append(total_row("Total (cash)", format_chf(result.cash_total)))
+        rows.append(_row(f"VAT {vat.rate}% ({vat.category})", format_chf(vat.vat), label_width))
+    rows.append(_row("Total", format_chf(result.total), label_width))
+    rows.append(_row("Total (cash)", format_chf(result.cash_total), label_width))
     return "\n".join(rows)
 
 

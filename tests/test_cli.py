@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from shopkit import __version__
-from shopkit.cli import main
+from shopkit.cli import _row, main
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 CART = str(EXAMPLES / "cart.json")
@@ -22,6 +22,36 @@ def test_text_quote(capsys: pytest.CaptureFixture[str]) -> None:
     assert "Coupon WELCOME10" in output
     assert "VAT 8.1% (standard)" in output
     assert output.splitlines()[-1].endswith("CHF 75.35")
+
+
+def test_the_text_quote_layout_is_pinned(capsys: pytest.CaptureFixture[str]) -> None:
+    # Complete text output for a coupon and two VAT rates; changing the layout must show up here.
+    assert main(["quote", CART, "--coupons", COUPONS, "--today", "2026-10-01"]) == 0
+    assert capsys.readouterr().out == (
+        "  3 x Green tea, 100 g         CHF 14.70\n"
+        "  2 x Stoneware mug            CHF 36.00\n"
+        "  1 x The Art of Brewing       CHF 29.00\n"
+        "Subtotal                       CHF 79.70\n"
+        "Items: 6\n"
+        "Coupon WELCOME10               -CHF 7.97\n"
+        "VAT 8.1% (standard)             CHF 2.62\n"
+        "VAT 2.6% (reduced)              CHF 1.02\n"
+        "Total                          CHF 75.37\n"
+        "Total (cash)                   CHF 75.35\n"
+    )
+
+
+def test_a_row_right_aligns_the_amount_at_the_existing_width() -> None:
+    # Label padded to 10, two spaces, amount right-aligned in 14 columns.
+    assert _row("Total", "CHF 1.00", 10) == "Total" + " " * 13 + "CHF 1.00"
+    assert len(_row("Total", "CHF 1.00", 10)) == 10 + 2 + 14
+
+
+def test_a_row_does_not_clip_a_label_or_amount_wider_than_its_column() -> None:
+    # Amount of 16 characters is wider than the 14-column amount field: written in full.
+    assert _row("A", "CHF 1'000'000.00", 3) == "A" + " " * 4 + "CHF 1'000'000.00"
+    # Label longer than the label column is written in full, amount still right-aligned.
+    assert _row("Coupon WELCOME10", "-CHF 7.97", 5) == "Coupon WELCOME10" + " " * 7 + "-CHF 7.97"
 
 
 def test_the_text_quote_shows_the_item_count_after_the_subtotal(

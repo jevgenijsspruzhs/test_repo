@@ -20,6 +20,12 @@ All notable changes to this project are documented in this file. The format is b
   line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
   is unchanged.
 
+### Changed
+
+- Internal: the text quote of `python -m shopkit quote` formats its product and total rows with
+  one shared helper, so the column layout is defined in one place. The output is unchanged, and
+  a test now pins the complete text output of a quote with a coupon and two VAT rates.
+
 ### Fixed
 
 - `python -m shopkit quote` no longer crashes with a traceback on an empty cart. It prints a quote
