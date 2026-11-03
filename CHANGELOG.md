@@ -26,6 +26,10 @@ All notable changes to this project are documented in this file. The format is b
   one shared helper, so the column layout is defined in one place. The output is unchanged, and
   a test now pins the complete text output of a quote with a coupon and two VAT rates.
 
+- Internal: the coupon file loader's error cases now have tests: a file that is not a list, an
+  entry that is not an object, a missing code, an invalid discount value, an invalid date, and a
+  missing file. The loader's behaviour is unchanged.
+
 ### Fixed
 
 - `python -m shopkit quote` no longer crashes with a traceback on an empty cart. It prints a quote
