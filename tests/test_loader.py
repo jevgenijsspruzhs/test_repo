@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -98,6 +99,51 @@ def test_parse_coupons() -> None:
 def test_invalid_coupon_files(document: object) -> None:
     with pytest.raises(CartFileError):
         parse_coupons(document)
+
+
+VALID_COUPON = {"code": "FIVEOFF", "kind": "fixed", "value": "5.00"}
+
+
+def test_coupon_file_that_is_not_a_list() -> None:
+    with pytest.raises(CartFileError, match=r"^coupons: expected a list$"):
+        parse_coupons({"code": "FIVEOFF"})
+
+
+@pytest.mark.parametrize("entry", ["FIVEOFF", 5, None, ["FIVEOFF"]])
+def test_coupon_entry_that_is_not_an_object(entry: object) -> None:
+    with pytest.raises(CartFileError, match=r"coupons\[1\]: expected an object"):
+        parse_coupons([VALID_COUPON, entry])
+
+
+def test_coupon_entry_without_code() -> None:
+    coupon = {key: value for key, value in VALID_COUPON.items() if key != "code"}
+    with pytest.raises(CartFileError, match=r"coupons\[0\]\.code: missing"):
+        parse_coupons([coupon])
+
+
+@pytest.mark.parametrize("value", ["abc", "-5", "10.001", 5.0])
+def test_coupon_entry_with_invalid_discount_value(value: object) -> None:
+    coupon = VALID_COUPON | {"value": value}
+    with pytest.raises(CartFileError, match=r"^coupons\[0\]"):
+        parse_coupons([coupon])
+
+
+@pytest.mark.parametrize("valid_until", ["31.12.2030", "2030-13-01", "tomorrow"])
+def test_coupon_entry_with_invalid_date(valid_until: str) -> None:
+    coupon = VALID_COUPON | {"valid_until": valid_until}
+    with pytest.raises(CartFileError, match=r"^coupons\[0\][.:] "):
+        parse_coupons([coupon])
+
+
+def test_valid_coupon_entry_still_loads() -> None:
+    book = parse_coupons([VALID_COUPON | {"valid_until": "2030-12-31"}])
+    assert book.find("FIVEOFF").valid_until == date(2030, 12, 31)
+
+
+def test_coupon_file_that_does_not_exist(tmp_path: Path) -> None:
+    missing = tmp_path / "missing-coupons.json"
+    with pytest.raises(CartFileError, match=rf"{re.escape(str(missing))}: file not found"):
+        load_coupons(missing)
 
 
 def test_load_files(tmp_path: Path) -> None:
