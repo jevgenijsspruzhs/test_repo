@@ -1,6 +1,6 @@
 """shopkit: a small e-commerce domain library (products, cart, coupons, Swiss VAT)."""
 
-from shopkit.cart import Cart, LineItem
+from shopkit.cart import Cart, LineItem, cart_item_count
 from shopkit.catalog import Catalog, Product
 from shopkit.coupons import Coupon, CouponBook, CouponKind
 from shopkit.errors import (
@@ -33,5 +33,6 @@ __all__ = [
     "VatCategory",
     "VatRates",
     "__version__",
+    "cart_item_count",
     "quote",
 ]
