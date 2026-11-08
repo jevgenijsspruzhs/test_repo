@@ -59,3 +59,17 @@ def percent_of(amount: Decimal, percent: Decimal) -> Decimal:
 def format_chf(amount: Decimal) -> str:
     """Format for people: ``CHF 1'234.50`` (Swiss thousands separator)."""
     return "CHF " + f"{amount:,.2f}".replace(",", "'")
+
+
+def format_price(cents: int) -> str:
+    """Format an amount given in cents as euros with two decimals: ``1999`` -> ``"€19.99"``.
+
+    Only whole cents are accepted (no rounding is done). Negative amounts are not supported
+    and raise :class:`InvalidAmountError` (a :class:`ValueError`).
+    """
+    if isinstance(cents, bool) or not isinstance(cents, int):
+        raise InvalidAmountError(f"amount must be an integer number of cents, not {cents!r}")
+    if cents < 0:
+        raise InvalidAmountError(f"amount must not be negative: {cents!r}")
+    euros, rest = divmod(cents, 100)
+    return f"€{euros}.{rest:02d}"
