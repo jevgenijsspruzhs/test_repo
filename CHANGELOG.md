@@ -20,6 +20,9 @@ All notable changes to this project are documented in this file. The format is b
   line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
   is unchanged.
 
+- `shopkit.money.format_price(cents)` formats an amount in cents as euros with two decimals and a
+  euro sign: `format_price(1999)` gives `€19.99`. Negative amounts raise `ValueError`.
+
 ### Changed
 
 - Internal: the text quote of `python -m shopkit quote` formats its product and total rows with
