@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.cart import MAX_QUANTITY, Cart
+from shopkit.cart import MAX_QUANTITY, Cart, cart_item_count
 from shopkit.catalog import Product
 from shopkit.errors import UnknownProductError
 from tests.conftest import BOOK, MUG, TEA
@@ -82,3 +82,19 @@ def test_an_empty_cart() -> None:
     assert cart.subtotal == Decimal("0.00")
     cart.add(BOOK)
     assert not cart.is_empty
+
+
+def test_cart_item_count_sums_quantities() -> None:
+    assert cart_item_count([("apple", 2), ("pear", 3)]) == 5
+
+
+def test_cart_item_count_of_an_empty_list_is_zero() -> None:
+    assert cart_item_count([]) == 0
+
+
+def test_cart_item_count_of_a_single_item() -> None:
+    assert cart_item_count([("apple", 7)]) == 7
+
+
+def test_cart_item_count_counts_repeated_skus_each_time() -> None:
+    assert cart_item_count([("apple", 2), ("apple", 3)]) == 5
