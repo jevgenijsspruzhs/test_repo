@@ -5,7 +5,14 @@ from decimal import Decimal
 import pytest
 
 from shopkit.errors import InvalidAmountError
-from shopkit.money import format_chf, parse_amount, percent_of, round_cash, round_cents
+from shopkit.money import (
+    format_chf,
+    format_price,
+    parse_amount,
+    percent_of,
+    round_cash,
+    round_cents,
+)
 
 
 @pytest.mark.parametrize(
@@ -65,3 +72,36 @@ def test_percent_of() -> None:
 def test_format_chf_uses_the_swiss_thousands_separator() -> None:
     assert format_chf(Decimal("1234.5")) == "CHF 1'234.50"
     assert format_chf(Decimal("0")) == "CHF 0.00"
+
+
+@pytest.mark.parametrize(
+    ("cents", "expected"),
+    [
+        (1999, "€19.99"),
+        (5, "€0.05"),
+        (0, "€0.00"),
+        (1, "€0.01"),
+        (10, "€0.10"),
+        (100, "€1.00"),
+        (1990, "€19.90"),
+        (123456789, "€1234567.89"),
+    ],
+)
+def test_format_price(cents: int, expected: str) -> None:
+    assert format_price(cents) == expected
+
+
+def test_format_price_returns_a_str() -> None:
+    assert isinstance(format_price(1999), str)
+
+
+@pytest.mark.parametrize("cents", [-1, -1999])
+def test_format_price_rejects_negative_amounts(cents: int) -> None:
+    with pytest.raises(InvalidAmountError):
+        format_price(cents)
+
+
+@pytest.mark.parametrize("cents", [19.99, "1999", True, None])
+def test_format_price_rejects_non_integers(cents: object) -> None:
+    with pytest.raises(InvalidAmountError):
+        format_price(cents)  # type: ignore[arg-type]

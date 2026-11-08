@@ -12,6 +12,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Added
 
+- `shopkit.money.format_price(cents)` formats an integer amount of cents as a euro string with two
+  decimals and a euro sign: `1999` gives `€19.99`, `5` gives `€0.05` and `0` gives `€0.00`.
+  Negative amounts and non-integers raise `InvalidAmountError`.
+
 - `python -m shopkit coupons <file>` lists the coupons in a coupon file: one line per coupon, in
   file order, with the code, the discount, the last valid day or `no end date`, and the minimum
   cart value if set. An unreadable or malformed file exits with 2.
