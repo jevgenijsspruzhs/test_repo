@@ -20,6 +20,10 @@ All notable changes to this project are documented in this file. The format is b
   line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
   is unchanged.
 
+- `shopkit.vat_cents.vat_amount(net_cents, rate_percent)` returns the VAT in whole cents on an
+  integer amount of cents at a whole-number percent rate, rounded half up, using integer
+  arithmetic only. For example `vat_amount(1000, 8) == 80` and `vat_amount(1005, 8) == 80`.
+
 ### Changed
 
 - Internal: the text quote of `python -m shopkit quote` formats its product and total rows with

@@ -5,6 +5,7 @@ from decimal import Decimal
 import pytest
 
 from shopkit.vat import SWISS_RATES, VatCategory, VatRates, parse_category, vat_amount
+from shopkit.vat_cents import vat_amount as vat_amount_cents
 
 
 def test_swiss_rates() -> None:
@@ -44,3 +45,26 @@ def test_parse_category() -> None:
 def test_vat_of_a_fully_discounted_amount_is_zero() -> None:
     assert vat_amount(Decimal("0.00"), Decimal("8.1")) == Decimal("0.00")
     assert vat_amount(Decimal("0.00"), Decimal("2.6")) == Decimal("0.00")
+
+
+def test_vat_amount_cents_examples_from_the_ticket() -> None:
+    assert vat_amount_cents(1000, 8) == 80
+    assert vat_amount_cents(1005, 8) == 80
+
+
+def test_vat_amount_cents_exact_half_cent_rounds_up() -> None:
+    assert vat_amount_cents(25, 2) == 1  # 0.50 -> 1
+    assert vat_amount_cents(5, 10) == 1  # 0.50 -> 1
+
+
+def test_vat_amount_cents_just_below_half_cent_rounds_down() -> None:
+    assert vat_amount_cents(24, 2) == 0  # 0.48 -> 0
+    assert vat_amount_cents(1004, 8) == 80  # 80.32 -> 80
+
+
+def test_vat_amount_cents_zero_net_amount_has_no_vat() -> None:
+    assert vat_amount_cents(0, 8) == 0
+
+
+def test_vat_amount_cents_zero_rate_has_no_vat() -> None:
+    assert vat_amount_cents(1000, 0) == 0
