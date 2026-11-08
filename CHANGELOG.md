@@ -20,6 +20,9 @@ All notable changes to this project are documented in this file. The format is b
   line after `Subtotal`, where N is the sum of the quantities of all lines. The `--json` output
   is unchanged.
 
+- `shopkit.cart.cart_item_count(items)` returns the total quantity of a list of `(name, quantity)`
+  tuples, and 0 for an empty list.
+
 ### Changed
 
 - Internal: the text quote of `python -m shopkit quote` formats its product and total rows with

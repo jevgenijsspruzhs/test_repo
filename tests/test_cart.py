@@ -4,10 +4,22 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.cart import MAX_QUANTITY, Cart
+from shopkit.cart import MAX_QUANTITY, Cart, cart_item_count
 from shopkit.catalog import Product
 from shopkit.errors import UnknownProductError
 from tests.conftest import BOOK, MUG, TEA
+
+
+def test_cart_item_count_sums_quantities() -> None:
+    assert cart_item_count([("apple", 2), ("pear", 3)]) == 5
+
+
+def test_cart_item_count_of_an_empty_list_is_zero() -> None:
+    assert cart_item_count([]) == 0
+
+
+def test_cart_item_count_of_a_zero_quantity_is_zero() -> None:
+    assert cart_item_count([("apple", 0)]) == 0
 
 
 def test_lines_keep_insertion_order(cart: Cart) -> None:
