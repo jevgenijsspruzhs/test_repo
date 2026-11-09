@@ -62,6 +62,20 @@ def test_percent_of() -> None:
     assert percent_of(Decimal("19.80"), Decimal("15")) == Decimal("2.97")
 
 
+@pytest.mark.parametrize(
+    ("amount", "expected"),
+    [
+        ("12.44", "1.24"),  # 1.244
+        ("12.45", "1.25"),  # 1.245: half a cent rounds up, not to even
+        ("12.46", "1.25"),  # 1.246
+        ("0.25", "0.03"),  # 0.025 -> 0.03 (half-even would give 0.02)
+        ("0.05", "0.01"),  # 0.005 -> 0.01 (half-even would give 0.00)
+    ],
+)
+def test_percent_of_rounds_half_up(amount: str, expected: str) -> None:
+    assert percent_of(Decimal(amount), Decimal("10")) == Decimal(expected)
+
+
 def test_format_chf_uses_the_swiss_thousands_separator() -> None:
     assert format_chf(Decimal("1234.5")) == "CHF 1'234.50"
     assert format_chf(Decimal("0")) == "CHF 0.00"
