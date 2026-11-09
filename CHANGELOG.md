@@ -53,6 +53,13 @@ All notable changes to this project are documented in this file. The format is b
   CHF 0.10 at 8.1 % now give VAT CHF 0.02 (previously CHF 0.03). Invoice totals can change by a
   few Rappen.
 
+- Quote prices with a percentage coupon were sometimes a Rappen off: the coupon discount was
+  rounded half to even instead of half up, so a discount of exactly half a cent went down. Now it
+  rounds up, as documented: 10 % off CHF 12.45 is a CHF 1.25 discount (it was CHF 1.24), so the
+  quote total is CHF 12.11 (it was CHF 12.12). The discount shared across the lines can change by
+  a Rappen too, and so can the VAT and total that depend on it. Fixed-amount coupons, line net
+  prices and VAT rounding are unchanged.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

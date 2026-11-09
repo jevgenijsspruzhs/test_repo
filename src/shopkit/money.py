@@ -53,7 +53,7 @@ def round_cash(amount: Decimal) -> Decimal:
 
 def percent_of(amount: Decimal, percent: Decimal) -> Decimal:
     """``percent`` per cent of ``amount``, rounded to the cent (half up)."""
-    return round(amount * percent / 100, 2)
+    return round_cents(amount * percent / 100)
 
 
 def format_chf(amount: Decimal) -> str:

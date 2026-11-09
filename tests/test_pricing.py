@@ -166,3 +166,75 @@ def test_a_gift_coupon_larger_than_the_cart_is_capped_at_the_subtotal() -> None:
     assert all(line.taxable == Decimal("0.00") for line in result.lines)
     assert all(vat.taxable >= 0 and vat.vat >= 0 for vat in result.vat_lines)
     assert result.vat_total == Decimal("0.00")
+
+
+HALF_CENT_CAKE = Product("CAKE-HALF", "Half-cent cake", Decimal("12.45"), VatCategory.STANDARD)
+TEN_PERCENT = Coupon("TEN", CouponKind.PERCENT, Decimal("10"))
+
+
+def test_a_half_cent_percentage_discount_is_rounded_half_up() -> None:
+    # 10 % of CHF 12.45 is CHF 1.245, which rounds half up to CHF 1.25 (not 1.24).
+    cart = Cart()
+    cart.add(HALF_CENT_CAKE)
+    result = quote(cart, today=TODAY, coupon=TEN_PERCENT)
+    assert result.discount == Decimal("1.25")
+    assert [line.taxable for line in result.lines] == [Decimal("11.20")]
+    # 11.20 at 8.1 % = 0.9072 -> 0.91
+    assert result.vat_total == Decimal("0.91")
+    assert result.total == Decimal("12.11")
+
+
+def test_a_half_cent_discount_on_a_two_line_quote_matches_the_price_list() -> None:
+    # Subtotal 6.00 + 6.45 = 12.45; 10 % is 1.245, which rounds half up to 1.25 (not 1.24).
+    # The discount is shared 0.60 + 0.65 (proportional to the nets), so the taxable amounts
+    # are 5.40 and 5.80, and the standard-rate VAT is 11.20 * 8.1 % = 0.9072 -> 0.91.
+    tea = Product("HALF-A", "Half-cent item A", Decimal("6.00"), VatCategory.STANDARD)
+    book = Product("HALF-B", "Half-cent item B", Decimal("6.45"), VatCategory.STANDARD)
+    cart = Cart()
+    cart.add(tea)
+    cart.add(book)
+    result = quote(cart, today=TODAY, coupon=TEN_PERCENT)
+    assert result.subtotal == Decimal("12.45")
+    assert result.discount == Decimal("1.25")
+    assert [line.discount for line in result.lines] == [Decimal("0.60"), Decimal("0.65")]
+    assert [line.taxable for line in result.lines] == [Decimal("5.40"), Decimal("5.80")]
+    assert result.vat_total == Decimal("0.91")
+    assert result.total == Decimal("12.11")
+
+
+@pytest.mark.parametrize(
+    ("net", "discount"),
+    [
+        ("12.44", "1.24"),  # 1.244: just below half a cent
+        ("12.45", "1.25"),  # 1.245: exactly half a cent, rounds up
+        ("12.46", "1.25"),  # 1.246: just above half a cent
+        ("0.25", "0.03"),  # 0.025: half a cent, the case that half-even rounding gets wrong
+        ("0.05", "0.01"),  # 0.005: the smallest half-cent case
+    ],
+)
+def test_percentage_discount_boundaries_round_half_up(net: str, discount: str) -> None:
+    cart = Cart()
+    cart.add(Product("BOUNDARY", "Boundary item", Decimal(net), VatCategory.STANDARD))
+    result = quote(cart, today=TODAY, coupon=TEN_PERCENT)
+    assert result.discount == Decimal(discount)
+    assert result.subtotal - result.discount + result.vat_total == result.total
+
+
+def test_a_single_unit_quote_matches_the_price_list() -> None:
+    cart = Cart()
+    cart.add(HALF_CENT_CAKE)
+    result = quote(cart, today=TODAY)
+    assert result.subtotal == Decimal("12.45")
+    assert [line.net for line in result.lines] == [Decimal("12.45")]
+    # 12.45 at 8.1 % = 1.00845 -> 1.01
+    assert result.total == Decimal("13.46")
+
+
+def test_a_line_set_to_zero_quantity_is_left_out_of_the_quote() -> None:
+    cart = Cart()
+    cart.add(HALF_CENT_CAKE)
+    cart.set_quantity(HALF_CENT_CAKE.sku, 0)
+    result = quote(cart, today=TODAY, coupon=TEN_PERCENT)
+    assert result.lines == ()
+    assert result.discount == Decimal("0.00")
+    assert result.total == Decimal("0.00")
