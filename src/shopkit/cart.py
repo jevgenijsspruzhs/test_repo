@@ -79,3 +79,11 @@ class Cart:
     def subtotal(self) -> Decimal:
         """The sum of all line nets, excluding VAT and discounts."""
         return sum((line.net for line in self._lines.values()), ZERO)
+
+
+def cart_item_count(items: list[tuple[str, int]]) -> int:
+    """Return the total quantity of all items: the sum of the ``quantity`` in each pair.
+
+    Each pair is counted as given; the SKUs are not looked up or merged. An empty list gives 0.
+    """
+    return sum(quantity for _sku, quantity in items)
