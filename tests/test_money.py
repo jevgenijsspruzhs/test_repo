@@ -5,7 +5,14 @@ from decimal import Decimal
 import pytest
 
 from shopkit.errors import InvalidAmountError
-from shopkit.money import format_chf, parse_amount, percent_of, round_cash, round_cents
+from shopkit.money import (
+    format_chf,
+    format_price,
+    parse_amount,
+    percent_of,
+    round_cash,
+    round_cents,
+)
 
 
 @pytest.mark.parametrize(
@@ -79,3 +86,23 @@ def test_percent_of_rounds_half_up(amount: str, expected: str) -> None:
 def test_format_chf_uses_the_swiss_thousands_separator() -> None:
     assert format_chf(Decimal("1234.5")) == "CHF 1'234.50"
     assert format_chf(Decimal("0")) == "CHF 0.00"
+
+
+@pytest.mark.parametrize(
+    ("cents", "expected"),
+    [
+        (1999, "€19.99"),
+        (5, "€0.05"),
+        (0, "€0.00"),
+        (100, "€1.00"),
+        (123456, "€1234.56"),
+    ],
+)
+def test_format_price(cents: int, expected: str) -> None:
+    assert format_price(cents) == expected
+
+
+@pytest.mark.parametrize("cents", [-1, -1999])
+def test_format_price_rejects_negative_amounts(cents: int) -> None:
+    with pytest.raises(ValueError, match="must not be negative"):
+        format_price(cents)
