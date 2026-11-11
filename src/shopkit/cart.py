@@ -23,6 +23,15 @@ class LineItem:
         return self.product.unit_price * self.quantity
 
 
+def cart_item_count(items: list[tuple[str, int]]) -> int:
+    """Return the total quantity of ``items``, a list of ``(name, quantity)`` pairs.
+
+    The names are ignored: entries with the same name are counted separately, not merged.
+    The result is an integer sum with no rounding, and an empty list gives 0.
+    """
+    return sum(quantity for _, quantity in items)
+
+
 def _check_quantity(quantity: int, *, allow_zero: bool) -> None:
     if isinstance(quantity, bool) or not isinstance(quantity, int):
         raise TypeError(f"quantity must be an integer, not {quantity!r}")
