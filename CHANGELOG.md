@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Added
 
+- `shopkit.cart.cart_item_count(items)` returns the total quantity of a list of `(name, quantity)`
+  pairs, for example 5 for `[("apple", 2), ("pear", 3)]` and 0 for an empty list.
+
 - `python -m shopkit coupons <file>` lists the coupons in a coupon file: one line per coupon, in
   file order, with the code, the discount, the last valid day or `no end date`, and the minimum
   cart value if set. An unreadable or malformed file exits with 2.

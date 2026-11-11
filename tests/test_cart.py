@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from shopkit.cart import MAX_QUANTITY, Cart
+from shopkit.cart import MAX_QUANTITY, Cart, cart_item_count
 from shopkit.catalog import Product
 from shopkit.errors import UnknownProductError
 from tests.conftest import BOOK, MUG, TEA
@@ -74,6 +74,22 @@ def test_set_quantity_and_remove(cart: Cart) -> None:
         cart.remove("BOOK-BREW")
     with pytest.raises(UnknownProductError):
         cart.set_quantity("NOPE", 1)
+
+
+def test_cart_item_count_sums_the_quantities() -> None:
+    assert cart_item_count([("apple", 2), ("pear", 3)]) == 5
+
+
+def test_cart_item_count_of_an_empty_list_is_zero() -> None:
+    assert cart_item_count([]) == 0
+
+
+def test_cart_item_count_of_a_single_pair() -> None:
+    assert cart_item_count([("apple", 4)]) == 4
+
+
+def test_cart_item_count_with_a_zero_quantity_adds_nothing() -> None:
+    assert cart_item_count([("apple", 2), ("pear", 0)]) == 2
 
 
 def test_an_empty_cart() -> None:
